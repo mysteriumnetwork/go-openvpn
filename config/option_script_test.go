@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The "MysteriumNetwork/node" Authors.
+ * Copyright (C) 2017 The "MysteriumNetwork/node" Authors.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package linux
+package config
 
-// TunnelService defines interface to manage tun device
-type TunnelService interface {
-	Start() error
-	Stop()
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
+func TestSimpleScriptPathIsUnquoted(t *testing.T) {
+	assert.Equal(
+		t,
+		"testpath/testname",
+		SimplePath("testname").FullPath("testpath"),
+	)
 }
 
-// TunnelDevice represents tun device structure
-type TunnelDevice struct {
-	Name string
+func TestQuotedScriptPathIsQuoted(t *testing.T) {
+	assert.Equal(
+		t,
+		`"testpath/testname"`,
+		QuotedPath("testname").FullPath("testpath"),
+	)
 }
