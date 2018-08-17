@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int initProcess(char *argv[], int argc, StatsCallback statsCallback)
+int initProcess(char *argv[], int argc, stats_callback statsCallback)
 {
     printf("Printing args:\n");
     for(int i=0; i< argc; i++ ) {
@@ -10,7 +10,7 @@ int initProcess(char *argv[], int argc, StatsCallback statsCallback)
     }
     printf("End\n");
 
-    ConnStats stats;
+    conn_stats stats;
     stats.bytes_in=123;
     stats.bytes_out=456;
 

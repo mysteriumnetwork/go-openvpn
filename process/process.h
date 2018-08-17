@@ -8,11 +8,11 @@ extern "C" {
 typedef struct {
     int bytes_in;
     int bytes_out;
-} ConnStats;
+} conn_stats;
 
-typedef void(*StatsCallback)(ConnStats);
+typedef void(*stats_callback)(conn_stats);
 
-int initProcess(char *argv[], int argc, StatsCallback callback);
+int initProcess(char *argv[], int argc, stats_callback callback);
 
 #ifdef __cplusplus
 }

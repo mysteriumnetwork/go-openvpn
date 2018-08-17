@@ -3,15 +3,15 @@ package process
 #include "process.h"
 #include <stdio.h>
 
-extern void GoCallback(ConnStats stats);
+extern void GoStatsCallback(conn_stats stats);
 */
 import "C"
 import (
 	"fmt"
 )
 
-//export GoCallback
-func GoCallback(stats C.ConnStats) {
+//export GoStatsCallback
+func GoStatsCallback(stats C.conn_stats) {
 	fmt.Println("Golang callback!")
 	fmt.Printf("bytes: %v\n", stats.bytes_out)
 	fmt.Printf("%+v\n", stats)
@@ -35,7 +35,7 @@ func (p * Process) RunWithArgs(args... string) {
 		procArgs.AddAll(args...)
 		defer procArgs.Free()
 
-		res , err := C.initProcess( procArgs.cPointer(), procArgs.cCount(), C.StatsCallback(C.GoCallback))
+		res , err := C.initProcess( procArgs.cPointer(), procArgs.cCount(), C.stats_callback(C.GoStatsCallback))
 		if err != nil {
 			p.resChan <- err
 		} else if res != 0 {
