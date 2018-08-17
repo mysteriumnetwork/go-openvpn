@@ -3,6 +3,21 @@ package process
 import "C"
 import "unsafe"
 
+
+type CCharPointer struct {
+	Ptr * C.char
+}
+
+func NewCharPointer(str string) * CCharPointer {
+	return &CCharPointer{
+		Ptr: C.CString(str),
+	}
+}
+
+func (ptr * CCharPointer)Delete() {
+	C.free(unsafe.Pointer(ptr.Ptr))
+}
+
 type Args struct {
 	pointers []*C.char
 }
