@@ -1,4 +1,5 @@
 package process
+
 /*
 
 #cgo CFLAGS: -I${SRCDIR}/bridge
@@ -18,68 +19,91 @@ extern void GoEventCallback(user_data usrData, conn_event event);
 import "C"
 import (
 	"fmt"
-	"strings"
+	"sync"
 )
 
-//export GoStatsCallback
-func GoStatsCallback(ptr C.user_data, stats C.conn_stats) {
+var callbacks = NewCallbackRegistry()
 
-	fmt.Printf("%+v\n", stats)
+//export GoStatsCallback
+func GoStatsCallback(ptr C.user_data, cStats C.conn_stats) {
+	id := int(ptr)
+	var stats Statistics
+	stats.BytesIn = int(cStats.bytes_in)
+	stats.BytesOut = int(cStats.bytes_out)
+	callbacks.Stats(id, stats)
 }
 
 //export GoLogCallback
 func GoLogCallback(ptr C.user_data, cStr *C.char) {
 	goStr := C.GoString(cStr)
-	logLines := strings.Split(goStr, "\n")
-	for _ , logLine := range logLines {
-		fmt.Println("Openvpn >>" , logLine)
-	}
-
+	id := int(ptr)
+	callbacks.Log(id, goStr)
 }
 
 //export GoEventCallback
-func GoEventCallback(ptr C.user_data, event C.conn_event) {
-	name := C.GoString(event.name)
-	info := C.GoString(event.info)
-	fmt.Println("Event >>", event.error, event.fatal, name, info)
+func GoEventCallback(ptr C.user_data, cEvent C.conn_event) {
+	id := int(ptr)
+	var e Event
+	e.Error = bool(cEvent.error)
+	e.Fatal = bool(cEvent.fatal)
+	e.Name = C.GoString(cEvent.name)
+	e.Info = C.GoString(cEvent.info)
+	callbacks.Event(id, e)
 }
 
 type Process struct {
-	resChan chan error
+	finished  *sync.WaitGroup
+	resError  error
+	callbacks interface{}
 }
 
-func CheckLibrary() {
-	C.checkLibrary(nil, C.log_callback(C.GoLogCallback))
+func CheckLibrary(logger Logger) {
+	id, callbackRemove := callbacks.Register(logger)
+	defer callbackRemove()
+	C.checkLibrary(C.user_data(id), C.log_callback(C.GoLogCallback))
 }
 
-func NewProcess() (*Process) {
+func NewProcess(callbacks interface{}) *Process {
 	return &Process{
-		resChan: make(chan error),
+		callbacks: callbacks,
+		resError:  nil,
+		finished:  &sync.WaitGroup{},
 	}
 }
 
-func (p * Process) RunWithArgs(args... string) {
+func (p *Process) RunWithArgs(args ...string) {
+	p.finished.Add(1)
 	go func() {
+		defer p.finished.Done()
 
-		cPtr:=NewCharPointer(args[0])
+		cPtr := NewCharPointer(args[0])
 		defer cPtr.Delete()
 
-		res , err := C.initProcess( cPtr.Ptr, C.user_data(nil) , C.stats_callback(C.GoStatsCallback), C.log_callback(C.GoLogCallback), C.event_callback(C.GoEventCallback))
-		if err != nil {
-			p.resChan <- err
-		} else if res != 0 {
-			p.resChan <- fmt.Errorf("res error: %v", res)
-		} else {
-			close(p.resChan)
-		}
+		callbackId, removeCallback := callbacks.Register(p.callbacks)
+		defer removeCallback()
 
+		res, err := C.initProcess(
+			cPtr.Ptr,
+			C.user_data(callbackId),
+			C.stats_callback(C.GoStatsCallback),
+			C.log_callback(C.GoLogCallback),
+			C.event_callback(C.GoEventCallback),
+		)
+		if err != nil {
+			p.resError = err
+		} else if res != 0 {
+			p.resError = fmt.Errorf("res error: %v", res)
+		} else {
+			p.resError = nil
+		}
 	}()
 }
 
-func (p * Process) WaitFor() error {
-	return <- p.resChan
+func (p *Process) WaitFor() error {
+	p.finished.Wait()
+	return p.resError
 }
 
-func (p * Process) Stop() {
+func (p *Process) Stop() {
 
 }

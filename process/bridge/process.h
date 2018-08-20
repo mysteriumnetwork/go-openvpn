@@ -8,7 +8,7 @@ extern "C" {
 #include <stdbool.h> //needed for bools :/
 
 
-typedef void* user_data;
+typedef int user_data;
 
 typedef void(*log_callback)(user_data, char * msg);
 
