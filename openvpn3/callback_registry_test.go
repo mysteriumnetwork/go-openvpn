@@ -1,4 +1,4 @@
-package process
+package openvpn3
 
 import "testing"
 import (
@@ -8,8 +8,8 @@ import (
 func TestTwoCallbacksAreAdded(t *testing.T) {
 	registry := NewCallbackRegistry()
 
-	id1 , _ := registry.Register("abc")
-	id2 , _ := registry.Register("def")
+	id1, _ := registry.Register("abc")
+	id2, _ := registry.Register("def")
 
 	assert.Equal(t, 0, id1)
 	assert.Equal(t, 1, id2)
@@ -30,7 +30,7 @@ func TestLogCallbackCalled(t *testing.T) {
 	callback := &mockedCallback{}
 	id, _ := registry.Register(callback)
 
-	registry.Log(id , "test")
+	registry.Log(id, "test")
 
 	assert.True(t, callback.logCalled)
 }
@@ -56,19 +56,19 @@ func TestStatsCallbackCalled(t *testing.T) {
 }
 
 type mockedCallback struct {
-	logCalled bool
+	logCalled   bool
 	eventCalled bool
 	statsCalled bool
 }
 
-func (mc *mockedCallback)Log(_ string) {
+func (mc *mockedCallback) Log(_ string) {
 	mc.logCalled = true
 }
 
-func (mc *mockedCallback)OnEvent(_ Event) {
+func (mc *mockedCallback) OnEvent(_ Event) {
 	mc.eventCalled = true
 }
 
-func (mc *mockedCallback)OnStats(_ Statistics) {
+func (mc *mockedCallback) OnStats(_ Statistics) {
 	mc.statsCalled = true
 }

@@ -1,14 +1,16 @@
-package process
+package openvpn3
 
 /*
 
 #cgo CFLAGS: -I${SRCDIR}/bridge
 #cgo LDFLAGS: -lstdc++
-#cgo LDFLAGS: -L${SRCDIR}/bridge -lopenvpn
+
+#cgo LDFLAGS: -L${SRCDIR}/bridge
+#cgo LDFLAGS: -lopenvpn3
 //TODO copied from openvpnv3 lib build tool - do we really need all of this?
 #cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices
 
-#include <process.h>
+#include <library.h>
 
 extern void GoLogCallback(user_data usrData, char * str);
 
@@ -18,8 +20,9 @@ extern void GoEventCallback(user_data usrData, conn_event event);
 */
 import "C"
 import (
-	"fmt"
+	"errors"
 	"sync"
+	"unsafe"
 )
 
 var callbacks = NewCallbackRegistry()
@@ -51,59 +54,80 @@ func GoEventCallback(ptr C.user_data, cEvent C.conn_event) {
 	callbacks.Event(id, e)
 }
 
-type Process struct {
+type Session struct {
 	finished  *sync.WaitGroup
 	resError  error
 	callbacks interface{}
+	session   unsafe.Pointer //handle to created session after Start method is called
 }
 
-func CheckLibrary(logger Logger) {
+func SelfCheck(logger Logger) {
 	id, callbackRemove := callbacks.Register(logger)
 	defer callbackRemove()
-	C.checkLibrary(C.user_data(id), C.log_callback(C.GoLogCallback))
+	C.check_library(C.user_data(id), C.log_callback(C.GoLogCallback))
 }
 
-func NewProcess(callbacks interface{}) *Process {
-	return &Process{
+func NewSession(callbacks interface{}) *Session {
+	return &Session{
 		callbacks: callbacks,
 		resError:  nil,
 		finished:  &sync.WaitGroup{},
 	}
 }
 
-func (p *Process) RunWithArgs(args ...string) {
+type expCredentials C.user_credentials
+
+func (p *Session) Start(profile string, creds Credentials) {
 	p.finished.Add(1)
 	go func() {
 		defer p.finished.Done()
 
-		cPtr := NewCharPointer(args[0])
-		defer cPtr.Delete()
+		profileContent := NewCharPointer(profile)
+		defer profileContent.Delete()
+
+		cUsername := NewCharPointer(creds.Username)
+		defer cUsername.Delete()
+
+		cPassword := NewCharPointer(creds.Password)
+		defer cPassword.Delete()
+
+		cCreds := expCredentials{
+			username: cUsername.Ptr,
+			password: cPassword.Ptr,
+		}
 
 		callbackId, removeCallback := callbacks.Register(p.callbacks)
 		defer removeCallback()
 
-		res, err := C.initProcess(
-			cPtr.Ptr,
+		session, _ := C.new_session(
+			profileContent.Ptr,
+			C.user_credentials(cCreds),
 			C.user_data(callbackId),
 			C.stats_callback(C.GoStatsCallback),
 			C.log_callback(C.GoLogCallback),
 			C.event_callback(C.GoEventCallback),
 		)
-		if err != nil {
-			p.resError = err
-		} else if res != 0 {
-			p.resError = fmt.Errorf("res error: %v", res)
-		} else {
-			p.resError = nil
+
+		if session == nil {
+			p.resError = errors.New("openvpn3 init failed")
+			return
 		}
+		p.session = session
+
+		res, _ := C.start_session(session)
+		if res != 0 {
+			p.resError = errors.New("openvpn3 connect failed")
+		}
+
+		C.cleanup_session(session)
 	}()
 }
 
-func (p *Process) WaitFor() error {
+func (p *Session) Wait() error {
 	p.finished.Wait()
 	return p.resError
 }
 
-func (p *Process) Stop() {
-
+func (p *Session) Stop() {
+	C.stop_session(p.session)
 }

@@ -1,4 +1,4 @@
-package process
+package openvpn3
 
 import "sync"
 
@@ -9,8 +9,8 @@ type Logger interface {
 type Event struct {
 	Fatal bool
 	Error bool
-	Name string
-	Info string
+	Name  string
+	Info  string
 }
 
 type EventConsumer interface {
@@ -18,7 +18,7 @@ type EventConsumer interface {
 }
 
 type Statistics struct {
-	BytesIn int
+	BytesIn  int
 	BytesOut int
 }
 
@@ -29,12 +29,12 @@ type StatsConsumer interface {
 type Unregister func()
 
 type CallbackRegistry struct {
-	lock sync.Locker
-	idMap map[int]interface{}
+	lock   sync.Locker
+	idMap  map[int]interface{}
 	lastId int
 }
 
-func (cr * CallbackRegistry)Register(callbacks interface{}) (int , Unregister) {
+func (cr *CallbackRegistry) Register(callbacks interface{}) (int, Unregister) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 
@@ -48,7 +48,7 @@ func (cr * CallbackRegistry)Register(callbacks interface{}) (int , Unregister) {
 	}
 }
 
-func (cr *CallbackRegistry)unregister(id int) {
+func (cr *CallbackRegistry) unregister(id int) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 	delete(cr.idMap, id)
@@ -98,10 +98,10 @@ func (cr *CallbackRegistry) Stats(id int, stats Statistics) {
 
 }
 
-func NewCallbackRegistry() *CallbackRegistry{
+func NewCallbackRegistry() *CallbackRegistry {
 	return &CallbackRegistry{
 		lastId: 0,
-		idMap: make(map[int]interface{}),
-		lock: &sync.Mutex{},
+		idMap:  make(map[int]interface{}),
+		lock:   &sync.Mutex{},
 	}
 }

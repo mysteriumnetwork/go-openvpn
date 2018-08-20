@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mysteriumnetwork/openvpnv3-go-bindings/process"
+	"github.com/mysteriumnetwork/openvpnv3-go-bindings/openvpn3"
 )
 
 type callbacks interface {
-	process.Logger
-	process.EventConsumer
-	process.StatsConsumer
+	openvpn3.Logger
+	openvpn3.EventConsumer
+	openvpn3.StatsConsumer
 }
 
 type loggingCallbacks struct {
@@ -25,11 +25,11 @@ func (lc *loggingCallbacks) Log(text string) {
 	}
 }
 
-func (lc *loggingCallbacks) OnEvent(event process.Event) {
+func (lc *loggingCallbacks) OnEvent(event openvpn3.Event) {
 	fmt.Printf("Openvpn event >> %+v\n", event)
 }
 
-func (lc *loggingCallbacks) OnStats(stats process.Statistics) {
+func (lc *loggingCallbacks) OnStats(stats openvpn3.Statistics) {
 	fmt.Printf("Openvpn stats >> %+v\n", stats)
 }
 
@@ -43,16 +43,16 @@ func (lc StdoutLogger) Log(text string) {
 
 func main() {
 
-	var logger = func(text string) {
+	var logger StdoutLogger = func(text string) {
 		lines := strings.Split(text, "\n")
 		for _, line := range lines {
 			fmt.Println("Library check >>", line)
 		}
 	}
 
-	process.CheckLibrary(StdoutLogger(logger))
+	openvpn3.SelfCheck(logger)
 
-	p := process.NewProcess(&loggingCallbacks{})
+	session := openvpn3.NewSession(&loggingCallbacks{})
 
 	bytes, err := ioutil.ReadFile("client.ovpn")
 	if err != nil {
@@ -60,10 +60,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	p.RunWithArgs(string(bytes))
-	err = p.WaitFor()
+	creds := openvpn3.Credentials{
+		Username: "abc",
+		Password: "def",
+	}
+
+	session.Start(string(bytes), creds)
+	err = session.Wait()
 	if err != nil {
-		fmt.Println("Process error: ", err)
+		fmt.Println("Openvpn3 error: ", err)
 	} else {
 		fmt.Println("Graceful exit")
 	}
