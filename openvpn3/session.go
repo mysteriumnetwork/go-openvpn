@@ -6,7 +6,11 @@ package openvpn3
 #cgo LDFLAGS: -lstdc++
 
 #cgo LDFLAGS: -L${SRCDIR}/bridge
-#cgo LDFLAGS: -lopenvpn3
+//main lib link
+//TODO reuse GOOS somehow?
+#cgo darwin LDFLAGS: -lopenvpn3_darwin_amd64
+#cgo linux LDFLAGS: -lopenvpn3_linux_amd64
+#cgo windows LDFLAGS: -lopenvpn3_windows_amd64
 //TODO copied from openvpnv3 lib build tool - do we really need all of this?
 #cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices
 
