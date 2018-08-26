@@ -3,7 +3,6 @@ package openvpn3
 /*
 
 #cgo CFLAGS: -I${SRCDIR}/bridge
-#cgo LDFLAGS: -lstdc++
 
 #cgo LDFLAGS: -L${SRCDIR}/bridge
 //main lib link
@@ -12,7 +11,8 @@ package openvpn3
 #cgo linux LDFLAGS: -lopenvpn3_linux_amd64
 #cgo windows LDFLAGS: -lopenvpn3_windows_amd64
 //TODO copied from openvpnv3 lib build tool - do we really need all of this?
-#cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices
+#cgo darwin LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices -mmacosx-version-min=10.8 -stdlib=libc++
+#cgo windows LDFLAGS: -lws2_32 -liphlpapi
 
 #include <library.h>
 
@@ -69,6 +69,7 @@ func SelfCheck(logger Logger) {
 	id, callbackRemove := callbacks.Register(logger)
 	defer callbackRemove()
 	C.check_library(C.user_data(id), C.log_callback(C.GoLogCallback))
+	logger.Log("Package version: " + Version())
 }
 
 func NewSession(callbacks interface{}) *Session {
