@@ -1,4 +1,7 @@
 language: go
+sudo: true #for docker service to be enabled
+os: linux
+
 
 install:
   - go get github.com/karalabe/xgo
