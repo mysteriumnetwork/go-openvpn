@@ -6,4 +6,4 @@ os: linux
 install:
   - go get github.com/karalabe/xgo
 
-script: xgo -x -v --go=1.9.2 --targets=linux/amd64,darwin/amd64 --out=test $PWD/cmd
+script: xgo -x -v --image=mysteriumnetwork/xgo-1.9.2 --targets=linux/amd64,darwin/amd64,windows/amd64 --out=test $PWD/cmd

@@ -1,5 +1,5 @@
 #include "version.hpp"
 
 char * getVersion() {
-    return "I am super puper version! (change later)";
+    return "0.1-beta";
 }
