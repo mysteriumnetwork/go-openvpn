@@ -20,3 +20,4 @@ echo "O3 is: $O3"
 /go-src-root/scripts/x-compile-linux.sh
 /go-src-root/scripts/x-compile-mac.sh
 /go-src-root/scripts/x-compile-windows.sh
+/go-src-root/scripts/x-compile-ios.sh

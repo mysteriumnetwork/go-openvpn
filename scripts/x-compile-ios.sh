@@ -3,19 +3,19 @@ set -e
 #x-compile.sh <profile>
 #where profile can be linux | osx | mingw (windows)
 
-PLATFORM=osx
+PLATFORM=ios
 SCRIPTS=mac
-LIBSUFFIX=darwin_amd64
+LIBSUFFIX=ios_arm64
 
 echo "Building for: $PLATFORM"
 
-BUILD_OSX=1 "core/scripts/$SCRIPTS/build-all"
+BUILD_IOS=1 "core/scripts/$SCRIPTS/build-all"
 
 . core/vars/setpath
 
 
 cd core/adapter
-PROF=$PLATFORM MTLS=1 NOSSL=1 LZ4=1 ASIO=1 ECHO=1 CO=1 build library
+PROF=$PLATFORM MTLS=1 NOSSL=1 LZ4=1 ASIO=1 ECHO=1 CO=1 OBJC=1 build library
 
 LIB_OUT="/go-src-root/openvpn3/bridge/libopenvpn3_${LIBSUFFIX}.a"
 rm -rf $LIB_OUT
