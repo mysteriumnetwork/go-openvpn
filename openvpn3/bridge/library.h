@@ -30,12 +30,20 @@ typedef struct {
 typedef void(*event_callback)(user_data, conn_event);
 
 typedef struct {
+    user_data usrData;
+    log_callback logCallback;
+    stats_callback statsCallback;
+    event_callback eventCallback;
+} callbacks_delegate;
+
+
+typedef struct {
     const char * username;
     const char * password;
 } user_credentials;
 
 //creates new session - nil on error,
-void *new_session(const char * profile_content, user_credentials credentials, user_data userData , stats_callback statsCallback, log_callback, event_callback);
+void *new_session(const char * profile_content, user_credentials credentials, callbacks_delegate callbacks);
 
 //starts created session
 int start_session(void *ptr);

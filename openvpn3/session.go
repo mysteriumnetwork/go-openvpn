@@ -72,7 +72,6 @@ func SelfCheck(logger Logger) {
 	id, callbackRemove := callbacks.Register(logger)
 	defer callbackRemove()
 	C.check_library(C.user_data(id), C.log_callback(C.GoLogCallback))
-	logger.Log("Package version: " + Version())
 }
 
 func NewSession(callbacks interface{}) *Session {
@@ -84,6 +83,11 @@ func NewSession(callbacks interface{}) *Session {
 }
 
 type expCredentials C.user_credentials
+
+type expCallbacks C.callbacks_delegate
+
+var ErrInitFailed = errors.New("openvpn3 init failed")
+var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 func (p *Session) Start(profile string, creds Credentials) {
 	p.finished.Add(1)
@@ -107,24 +111,28 @@ func (p *Session) Start(profile string, creds Credentials) {
 		callbackId, removeCallback := callbacks.Register(p.callbacks)
 		defer removeCallback()
 
+		callbacksDelegate := expCallbacks{
+			usrData:       C.user_data(callbackId),
+			statsCallback: C.stats_callback(C.GoStatsCallback),
+			logCallback:   C.log_callback(C.GoLogCallback),
+			eventCallback: C.event_callback(C.GoEventCallback),
+		}
+
 		session, _ := C.new_session(
 			profileContent.Ptr,
 			C.user_credentials(cCreds),
-			C.user_data(callbackId),
-			C.stats_callback(C.GoStatsCallback),
-			C.log_callback(C.GoLogCallback),
-			C.event_callback(C.GoEventCallback),
+			C.callbacks_delegate(callbacksDelegate),
 		)
 
 		if session == nil {
-			p.resError = errors.New("openvpn3 init failed")
+			p.resError = ErrInitFailed
 			return
 		}
 		p.session = session
 
 		res, _ := C.start_session(session)
 		if res != 0 {
-			p.resError = errors.New("openvpn3 connect failed")
+			p.resError = ErrConnectFailed
 		}
 
 		C.cleanup_session(session)
