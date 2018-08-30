@@ -6,4 +6,4 @@ os: linux
 install:
   - go get github.com/karalabe/xgo
 
-script: check-all.sh
+script: ./check-all.sh
