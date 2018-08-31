@@ -6,18 +6,17 @@ extern "C" {
 #endif
 
 #include <stdbool.h> //needed for bools :/
+#include "user_data.h"
+#include "tunsetup.h"
 
-
-typedef int user_data;
-
-typedef void(*log_callback)(user_data, char * msg);
+typedef void(*log_callback)(user_callback_data , char * msg);
 
 typedef struct {
     int bytes_in;
     int bytes_out;
 } conn_stats;
 
-typedef void(*stats_callback)(user_data, conn_stats);
+typedef void(*stats_callback)(user_callback_data, conn_stats);
 
 //C++ -> C struct remap of openvpn::ClientApi::event
 typedef struct {
@@ -27,10 +26,10 @@ typedef struct {
     char *info;
 } conn_event;
 
-typedef void(*event_callback)(user_data, conn_event);
+typedef void(*event_callback)(user_callback_data, conn_event);
 
 typedef struct {
-    user_data usrData;
+    user_callback_data usrData;
     log_callback logCallback;
     stats_callback statsCallback;
     event_callback eventCallback;
@@ -43,7 +42,7 @@ typedef struct {
 } user_credentials;
 
 //creates new session - nil on error,
-void *new_session(const char * profile_content, user_credentials credentials, callbacks_delegate callbacks);
+void *new_session(const char * profile_content, user_credentials, callbacks_delegate , tun_builder_callbacks);
 
 //starts created session
 int start_session(void *ptr);
@@ -52,7 +51,7 @@ void stop_session(void *ptr);
 //cleanups session
 void cleanup_session(void *ptr);
 
-void check_library(user_data userData, log_callback);
+void check_library(user_callback_data userData, log_callback);
 
 #ifdef __cplusplus
 }
