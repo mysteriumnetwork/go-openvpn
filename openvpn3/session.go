@@ -18,12 +18,13 @@ package openvpn3
 #cgo windows LDFLAGS: -lws2_32 -liphlpapi
 
 #include <library.h>
+#include <tunsetup.h>
 
-extern void GoLogCallback(user_data usrData, char * str);
+extern void GoLogCallback(user_callback_data usrData, char * str);
 
-extern void GoStatsCallback(user_data usrData, conn_stats stats);
+extern void GoStatsCallback(user_callback_data usrData, conn_stats stats);
 
-extern void GoEventCallback(user_data usrData, conn_event event);
+extern void GoEventCallback(user_callback_data usrData, conn_event event);
 */
 import "C"
 import (
@@ -35,7 +36,7 @@ import (
 var callbacks = NewCallbackRegistry()
 
 //export GoStatsCallback
-func GoStatsCallback(ptr C.user_data, cStats C.conn_stats) {
+func GoStatsCallback(ptr C.user_callback_data, cStats C.conn_stats) {
 	id := int(ptr)
 	var stats Statistics
 	stats.BytesIn = int(cStats.bytes_in)
@@ -44,14 +45,14 @@ func GoStatsCallback(ptr C.user_data, cStats C.conn_stats) {
 }
 
 //export GoLogCallback
-func GoLogCallback(ptr C.user_data, cStr *C.char) {
+func GoLogCallback(ptr C.user_callback_data, cStr *C.char) {
 	goStr := C.GoString(cStr)
 	id := int(ptr)
 	callbacks.Log(id, goStr)
 }
 
 //export GoEventCallback
-func GoEventCallback(ptr C.user_data, cEvent C.conn_event) {
+func GoEventCallback(ptr C.user_callback_data, cEvent C.conn_event) {
 	id := int(ptr)
 	var e Event
 	e.Error = bool(cEvent.error)
@@ -62,16 +63,16 @@ func GoEventCallback(ptr C.user_data, cEvent C.conn_event) {
 }
 
 type Session struct {
-	finished  *sync.WaitGroup
-	resError  error
-	callbacks interface{}
-	session   unsafe.Pointer //handle to created session after Start method is called
+	finished   *sync.WaitGroup
+	resError   error
+	callbacks  interface{}
+	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
 func SelfCheck(logger Logger) {
 	id, callbackRemove := callbacks.Register(logger)
 	defer callbackRemove()
-	C.check_library(C.user_data(id), C.log_callback(C.GoLogCallback))
+	C.check_library(C.user_callback_data(id), C.log_callback(C.GoLogCallback))
 }
 
 func NewSession(callbacks interface{}) *Session {
@@ -89,10 +90,10 @@ type expCallbacks C.callbacks_delegate
 var ErrInitFailed = errors.New("openvpn3 init failed")
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
-func (p *Session) Start(profile string, creds Credentials) {
-	p.finished.Add(1)
+func (session *Session) Start(profile string, creds Credentials) {
+	session.finished.Add(1)
 	go func() {
-		defer p.finished.Done()
+		defer session.finished.Done()
 
 		profileContent := NewCharPointer(profile)
 		defer profileContent.Delete()
@@ -108,42 +109,46 @@ func (p *Session) Start(profile string, creds Credentials) {
 			password: cPassword.Ptr,
 		}
 
-		callbackId, removeCallback := callbacks.Register(p.callbacks)
+		callbackId, removeCallback := callbacks.Register(session.callbacks)
 		defer removeCallback()
 
 		callbacksDelegate := expCallbacks{
-			usrData:       C.user_data(callbackId),
+			usrData:       C.user_callback_data(callbackId),
 			statsCallback: C.stats_callback(C.GoStatsCallback),
 			logCallback:   C.log_callback(C.GoLogCallback),
 			eventCallback: C.event_callback(C.GoEventCallback),
 		}
 
-		session, _ := C.new_session(
+		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(nil)
+		defer removeTunCallbacks()
+
+		sessionPtr, _ := C.new_session(
 			profileContent.Ptr,
 			C.user_credentials(cCreds),
 			C.callbacks_delegate(callbacksDelegate),
+			C.tun_builder_callbacks(tunBuilderCallbacks),
 		)
 
-		if session == nil {
-			p.resError = ErrInitFailed
+		if sessionPtr == nil {
+			session.resError = ErrInitFailed
 			return
 		}
-		p.session = session
+		session.sessionPtr = sessionPtr
 
-		res, _ := C.start_session(session)
+		res, _ := C.start_session(sessionPtr)
 		if res != 0 {
-			p.resError = ErrConnectFailed
+			session.resError = ErrConnectFailed
 		}
 
-		C.cleanup_session(session)
+		C.cleanup_session(sessionPtr)
 	}()
 }
 
-func (p *Session) Wait() error {
-	p.finished.Wait()
-	return p.resError
+func (session *Session) Wait() error {
+	session.finished.Wait()
+	return session.resError
 }
 
-func (p *Session) Stop() {
-	C.stop_session(p.session)
+func (session *Session) Stop() {
+	C.stop_session(session.sessionPtr)
 }
