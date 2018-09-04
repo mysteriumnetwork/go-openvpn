@@ -1,7 +1,7 @@
 package openvpn3
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/bridge
+#cgo CFLAGS: -I${SRCDIR}/../bridge
 
 #include <tunsetup.h>
 
@@ -69,18 +69,19 @@ extern void  goTeardown(user_callback_data , bool disconnect);
 
 */
 import "C"
+import "sync"
 
 //export goNewBuilder
 func goNewBuilder(cd C.user_callback_data) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	return C.bool(delegate.NewBuilder())
 }
 
 //export goSetLayer
 func goSetLayer(cd C.user_callback_data, layer C.int) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetLayer(int(layer))
 	return C.bool(res)
 }
@@ -88,7 +89,7 @@ func goSetLayer(cd C.user_callback_data, layer C.int) C.bool {
 //export goSetRemoteAddress
 func goSetRemoteAddress(cd C.user_callback_data, ipAddress *C.char, ipv6 C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetRemoteAddress(C.GoString(ipAddress), bool(ipv6))
 	return C.bool(res)
 }
@@ -96,7 +97,7 @@ func goSetRemoteAddress(cd C.user_callback_data, ipAddress *C.char, ipv6 C.bool)
 //export goAddAddress
 func goAddAddress(cd C.user_callback_data, address *C.char, prefixLength C.int, gateway *C.char, ipv6 C.bool, net30 C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddAddress(C.GoString(address), int(prefixLength), C.GoString(gateway), bool(ipv6), bool(net30))
 	return C.bool(res)
 }
@@ -104,7 +105,7 @@ func goAddAddress(cd C.user_callback_data, address *C.char, prefixLength C.int, 
 //export goSetRouteMetricDefault
 func goSetRouteMetricDefault(cd C.user_callback_data, metric C.int) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetRouteMetricDefault(int(metric))
 	return C.bool(res)
 }
@@ -112,7 +113,7 @@ func goSetRouteMetricDefault(cd C.user_callback_data, metric C.int) C.bool {
 //export goRerouteGw
 func goRerouteGw(cd C.user_callback_data, ipv4 C.bool, ipv6 C.bool, flags C.uint) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.RerouteGw(bool(ipv4), bool(ipv6), int(flags))
 	return C.bool(res)
 }
@@ -120,7 +121,7 @@ func goRerouteGw(cd C.user_callback_data, ipv4 C.bool, ipv6 C.bool, flags C.uint
 //export goAddRoute
 func goAddRoute(cd C.user_callback_data, address *C.char, prefixLength C.int, metric C.int, ipv6 C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddRoute(C.GoString(address), int(prefixLength), int(metric), bool(ipv6))
 	return C.bool(res)
 }
@@ -128,7 +129,7 @@ func goAddRoute(cd C.user_callback_data, address *C.char, prefixLength C.int, me
 //export goExcludeRoute
 func goExcludeRoute(cd C.user_callback_data, address *C.char, prefixLength C.int, metric C.int, ipv6 C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.ExcludeRoute(C.GoString(address), int(prefixLength), int(metric), bool(ipv6))
 	return C.bool(res)
 }
@@ -136,7 +137,7 @@ func goExcludeRoute(cd C.user_callback_data, address *C.char, prefixLength C.int
 //export goAddDnsServer
 func goAddDnsServer(cd C.user_callback_data, address *C.char, ipv6 C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddDnsServer(C.GoString(address), bool(ipv6))
 	return C.bool(res)
 }
@@ -144,7 +145,7 @@ func goAddDnsServer(cd C.user_callback_data, address *C.char, ipv6 C.bool) C.boo
 //export goAddSearchDomain
 func goAddSearchDomain(cd C.user_callback_data, domain *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddSearchDomain(C.GoString(domain))
 	return C.bool(res)
 }
@@ -152,7 +153,7 @@ func goAddSearchDomain(cd C.user_callback_data, domain *C.char) C.bool {
 //export goSetMtu
 func goSetMtu(cd C.user_callback_data, mtu C.int) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetMtu(int(mtu))
 	return C.bool(res)
 }
@@ -160,7 +161,7 @@ func goSetMtu(cd C.user_callback_data, mtu C.int) C.bool {
 //export goSetSessionName
 func goSetSessionName(cd C.user_callback_data, name *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetSessionName(C.GoString(name))
 	return C.bool(res)
 }
@@ -168,7 +169,7 @@ func goSetSessionName(cd C.user_callback_data, name *C.char) C.bool {
 //export goAddProxyBypass
 func goAddProxyBypass(cd C.user_callback_data, bypassHost *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddProxyBypass(C.GoString(bypassHost))
 	return C.bool(res)
 }
@@ -176,7 +177,7 @@ func goAddProxyBypass(cd C.user_callback_data, bypassHost *C.char) C.bool {
 //export goSetProxyAutoConfigUrl
 func goSetProxyAutoConfigUrl(cd C.user_callback_data, url *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetProxyAutoConfigUrl(C.GoString(url))
 	return C.bool(res)
 }
@@ -184,7 +185,7 @@ func goSetProxyAutoConfigUrl(cd C.user_callback_data, url *C.char) C.bool {
 //export goSetProxyHttp
 func goSetProxyHttp(cd C.user_callback_data, host *C.char, port C.int) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetProxyHttp(C.GoString(host), int(port))
 	return C.bool(res)
 }
@@ -192,7 +193,7 @@ func goSetProxyHttp(cd C.user_callback_data, host *C.char, port C.int) C.bool {
 //export goSetProxyHttps
 func goSetProxyHttps(cd C.user_callback_data, host *C.char, port C.int) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetProxyHttps(C.GoString(host), int(port))
 	return C.bool(res)
 }
@@ -200,7 +201,7 @@ func goSetProxyHttps(cd C.user_callback_data, host *C.char, port C.int) C.bool {
 //export goAddWinsServer
 func goAddWinsServer(cd C.user_callback_data, address *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.AddWinsServer(C.GoString(address))
 	return C.bool(res)
 }
@@ -208,7 +209,7 @@ func goAddWinsServer(cd C.user_callback_data, address *C.char) C.bool {
 //export goSetBlockIpv6
 func goSetBlockIpv6(cd C.user_callback_data, ipv6Block C.bool) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetBlockIpv6(bool(ipv6Block))
 	return C.bool(res)
 }
@@ -216,7 +217,7 @@ func goSetBlockIpv6(cd C.user_callback_data, ipv6Block C.bool) C.bool {
 //export goSetAdapterDomainSuffix
 func goSetAdapterDomainSuffix(cd C.user_callback_data, name *C.char) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.SetAdapterDomainSuffix(C.GoString(name))
 	return C.bool(res)
 }
@@ -224,7 +225,7 @@ func goSetAdapterDomainSuffix(cd C.user_callback_data, name *C.char) C.bool {
 //export goEstablish
 func goEstablish(cd C.user_callback_data) C.int {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	sock, err := delegate.Establish()
 	if err != nil {
 		return -1 //indicated that socket establish failed
@@ -235,7 +236,7 @@ func goEstablish(cd C.user_callback_data) C.int {
 //export goPersist
 func goPersist(cd C.user_callback_data) C.bool {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	res := delegate.Persist()
 	return C.bool(res)
 }
@@ -243,22 +244,26 @@ func goPersist(cd C.user_callback_data) C.bool {
 //export goEstablishLite
 func goEstablishLite(cd C.user_callback_data) {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	delegate.EstablishLite()
 }
 
 //export goTeardown
 func goTeardown(cd C.user_callback_data, disconnect C.bool) {
 	id := int(cd)
-	delegate := TunnSetupRegistry.lookup(id)
+	delegate := tunnelSetupRegistry.lookup(id)
 	delegate.Teardown(bool(disconnect))
 }
 
-type expTunSetupCallbacks C.tun_builder_callbacks
+var tunnelSetupRegistry = tunSetupRegistry{
+	lock:   &sync.RWMutex{},
+	idMap:  make(map[int]TunnelSetup),
+	lastId: 0,
+}
 
-func registerTunnelSetupDelegate(delegate TunnelSetup) (expTunSetupCallbacks, func()) {
-	id, unregister := TunnSetupRegistry.Register(delegate)
-	return expTunSetupCallbacks{
+func registerTunnelSetupDelegate(delegate TunnelSetup) (C.tun_builder_callbacks, func()) {
+	id, unregister := tunnelSetupRegistry.Register(delegate)
+	return C.tun_builder_callbacks{
 		usrData: C.user_callback_data(id),
 		//delegates to go callbacks
 		new_builder:               C.tun_builder_new(C.goNewBuilder),

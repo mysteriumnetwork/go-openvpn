@@ -8,12 +8,6 @@ type tunSetupRegistry struct {
 	lastId int
 }
 
-var TunnSetupRegistry = tunSetupRegistry{
-	lock:   &sync.RWMutex{},
-	idMap:  make(map[int]TunnelSetup),
-	lastId: 0,
-}
-
 func (registry *tunSetupRegistry) Register(delegate TunnelSetup) (int, func()) {
 	registry.lock.Lock()
 	defer registry.lock.Unlock()
