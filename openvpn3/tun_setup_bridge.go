@@ -256,7 +256,7 @@ func goTeardown(cd C.user_callback_data, disconnect C.bool) {
 }
 
 var tunnelSetupRegistry = tunSetupRegistry{
-	lock:   &sync.RWMutex{},
+	lock:   &sync.Mutex{},
 	idMap:  make(map[int]TunnelSetup),
 	lastId: 0,
 }
