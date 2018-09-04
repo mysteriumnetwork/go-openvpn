@@ -119,7 +119,7 @@ func (session *Session) Start(profile string, creds Credentials) {
 			eventCallback: C.event_callback(C.GoEventCallback),
 		}
 
-		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(nil)
+		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(&NoOpTunnelSetup{})
 		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
