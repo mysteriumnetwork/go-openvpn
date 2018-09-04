@@ -5,7 +5,7 @@ set -e
 rm -rf core
 fetch_openvpn3
 
-cp -f core/adapter/library.h /go-src-root/openvpn3/bridge/.
+cp -f core/adapter/*.h /go-src-root/openvpn3/bridge/.
 
 export O3=`pwd`
 export DEP_DIR=`pwd`/dep_dir
