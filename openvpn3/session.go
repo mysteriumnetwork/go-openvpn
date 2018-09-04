@@ -20,11 +20,11 @@ package openvpn3
 #include <library.h>
 #include <tunsetup.h>
 
-extern void GoLogCallback(user_callback_data usrData, char * str);
+extern void goLogCallback(user_callback_data usrData, char * str);
 
-extern void GoStatsCallback(user_callback_data usrData, conn_stats stats);
+extern void goStatsCallback(user_callback_data usrData, conn_stats stats);
 
-extern void GoEventCallback(user_callback_data usrData, conn_event event);
+extern void goEventCallback(user_callback_data usrData, conn_event event);
 */
 import "C"
 import (
@@ -33,46 +33,11 @@ import (
 	"unsafe"
 )
 
-var callbacks = NewCallbackRegistry()
-
-//export GoStatsCallback
-func GoStatsCallback(ptr C.user_callback_data, cStats C.conn_stats) {
-	id := int(ptr)
-	var stats Statistics
-	stats.BytesIn = int(cStats.bytes_in)
-	stats.BytesOut = int(cStats.bytes_out)
-	callbacks.Stats(id, stats)
-}
-
-//export GoLogCallback
-func GoLogCallback(ptr C.user_callback_data, cStr *C.char) {
-	goStr := C.GoString(cStr)
-	id := int(ptr)
-	callbacks.Log(id, goStr)
-}
-
-//export GoEventCallback
-func GoEventCallback(ptr C.user_callback_data, cEvent C.conn_event) {
-	id := int(ptr)
-	var e Event
-	e.Error = bool(cEvent.error)
-	e.Fatal = bool(cEvent.fatal)
-	e.Name = C.GoString(cEvent.name)
-	e.Info = C.GoString(cEvent.info)
-	callbacks.Event(id, e)
-}
-
 type Session struct {
 	finished   *sync.WaitGroup
 	resError   error
 	callbacks  interface{}
 	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
-}
-
-func SelfCheck(logger Logger) {
-	id, callbackRemove := callbacks.Register(logger)
-	defer callbackRemove()
-	C.check_library(C.user_callback_data(id), C.log_callback(C.GoLogCallback))
 }
 
 func NewSession(callbacks interface{}) *Session {
@@ -83,12 +48,10 @@ func NewSession(callbacks interface{}) *Session {
 	}
 }
 
-type expCredentials C.user_credentials
-
-type expCallbacks C.callbacks_delegate
-
 var ErrInitFailed = errors.New("openvpn3 init failed")
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
+
+type expCredentials C.user_credentials
 
 func (session *Session) Start(profile string, creds Credentials) {
 	session.finished.Add(1)
@@ -109,15 +72,8 @@ func (session *Session) Start(profile string, creds Credentials) {
 			password: cPassword.Ptr,
 		}
 
-		callbackId, removeCallback := callbacks.Register(session.callbacks)
+		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
-
-		callbacksDelegate := expCallbacks{
-			usrData:       C.user_callback_data(callbackId),
-			statsCallback: C.stats_callback(C.GoStatsCallback),
-			logCallback:   C.log_callback(C.GoLogCallback),
-			eventCallback: C.event_callback(C.GoEventCallback),
-		}
 
 		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(&NoOpTunnelSetup{})
 		defer removeTunCallbacks()

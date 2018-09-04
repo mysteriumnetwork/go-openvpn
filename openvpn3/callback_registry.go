@@ -34,7 +34,7 @@ type CallbackRegistry struct {
 	lastId int
 }
 
-func (cr *CallbackRegistry) Register(callbacks interface{}) (int, Unregister) {
+func (cr *CallbackRegistry) register(callbacks interface{}) (int, Unregister) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 

@@ -1,7 +1,7 @@
 package openvpn3
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../bridge
+#cgo CFLAGS: -I${SRCDIR}/bridge
 
 #include <tunsetup.h>
 
