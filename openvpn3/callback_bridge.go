@@ -5,7 +5,6 @@ package openvpn3
 #cgo CFLAGS: -I${SRCDIR}/bridge
 
 #include <library.h>
-#include <tunsetup.h>
 
 extern void goLogCallback(user_callback_data usrData, char * str);
 

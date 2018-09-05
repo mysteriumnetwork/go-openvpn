@@ -20,11 +20,6 @@ package openvpn3
 #include <library.h>
 #include <tunsetup.h>
 
-extern void goLogCallback(user_callback_data usrData, char * str);
-
-extern void goStatsCallback(user_callback_data usrData, conn_stats stats);
-
-extern void goEventCallback(user_callback_data usrData, conn_event event);
 */
 import "C"
 import (
