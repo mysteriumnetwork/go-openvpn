@@ -9,7 +9,7 @@ package openvpn3
 //TODO reuse GOOS somehow?
 #cgo darwin,amd64 LDFLAGS: -lopenvpn3_darwin_amd64
 #cgo ios,arm64 LDFLAGS: -lopenvpn3_ios_arm64
-#cgo linux LDFLAGS: -lopenvpn3_linux_amd64
+#cgo linux,amd64 LDFLAGS: -lopenvpn3_linux_amd64
 #cgo windows LDFLAGS: -lopenvpn3_windows_amd64
 //TODO copied from openvpnv3 lib build tool - do we really need all of this?
 #cgo darwin,amd64 LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices -mmacosx-version-min=10.8 -stdlib=libc++
