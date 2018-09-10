@@ -43,6 +43,8 @@ func (lc StdoutLogger) Log(text string) {
 
 func main() {
 
+	profileName := os.Args[1]
+
 	var logger StdoutLogger = func(text string) {
 		lines := strings.Split(text, "\n")
 		for _, line := range lines {
@@ -52,9 +54,9 @@ func main() {
 
 	openvpn3.SelfCheck(logger)
 
-	session := openvpn3.NewSession(&loggingCallbacks{})
+	session := openvpn3.NewSession(&loggingCallbacks{}, &openvpn3.NoOpTunnelSetup{})
 
-	bytes, err := ioutil.ReadFile("client.ovpn")
+	bytes, err := ioutil.ReadFile(profileName)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

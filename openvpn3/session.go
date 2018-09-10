@@ -36,7 +36,7 @@ type Session struct {
 	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
-func NewSession(callbacks interface{}) *Session {
+func NewSession(callbacks interface{}, tunSetup TunnelSetup) *Session {
 	return &Session{
 		callbacks: callbacks,
 		resError:  nil,
