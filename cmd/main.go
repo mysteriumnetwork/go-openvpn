@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mysteriumnetwork/openvpnv3-go-bindings/openvpn3"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn3"
 )
 
 type callbacks interface {
