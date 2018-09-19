@@ -5,7 +5,7 @@ os: linux
 
 install:
   - go get github.com/karalabe/xgo
-  - go get golang.org/x/mobile
+  - go get golang.org/x/mobile/cmd/gomobile
 
 script:
   - ./check-all.sh
@@ -20,3 +20,6 @@ deploy:
   file: artifacts/*
   skip_cleanup: true
   api_key: "$GIT_RELEASES_API_KEY"
+  on:
+    branch: master
+    tags: true
