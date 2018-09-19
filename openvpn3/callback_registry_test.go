@@ -6,7 +6,7 @@ import (
 )
 
 func TestTwoCallbacksAreAdded(t *testing.T) {
-	registry := NewCallbackRegistry()
+	registry := newCallbackRegistry()
 
 	id1, _ := registry.register("abc")
 	id2, _ := registry.register("def")
@@ -16,7 +16,7 @@ func TestTwoCallbacksAreAdded(t *testing.T) {
 }
 
 func TestCallbackRemovedOnUnregister(t *testing.T) {
-	registry := NewCallbackRegistry()
+	registry := newCallbackRegistry()
 	id, unregister := registry.register("abc")
 
 	assert.Contains(t, registry.idMap, id)
@@ -25,32 +25,32 @@ func TestCallbackRemovedOnUnregister(t *testing.T) {
 }
 
 func TestLogCallbackCalled(t *testing.T) {
-	registry := NewCallbackRegistry()
+	registry := newCallbackRegistry()
 
 	callback := &mockedCallback{}
 	id, _ := registry.register(callback)
 
-	registry.Log(id, "test")
+	registry.log(id, "test")
 
 	assert.True(t, callback.logCalled)
 }
 
 func TestEventCallbackCalled(t *testing.T) {
-	registry := NewCallbackRegistry()
+	registry := newCallbackRegistry()
 	callback := &mockedCallback{}
 
 	id, _ := registry.register(callback)
-	registry.Event(id, Event{})
+	registry.event(id, Event{})
 
 	assert.True(t, callback.eventCalled)
 }
 
 func TestStatsCallbackCalled(t *testing.T) {
-	registry := NewCallbackRegistry()
+	registry := newCallbackRegistry()
 	callback := &mockedCallback{}
 
 	id, _ := registry.register(callback)
-	registry.Stats(id, Statistics{})
+	registry.stats(id, Statistics{})
 
 	assert.True(t, callback.statsCalled)
 }

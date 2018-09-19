@@ -8,7 +8,7 @@ type tunSetupRegistry struct {
 	lastId int
 }
 
-func (registry *tunSetupRegistry) Register(delegate TunnelSetup) (int, func()) {
+func (registry *tunSetupRegistry) register(delegate TunnelSetup) (int, func()) {
 	registry.lock.Lock()
 	defer registry.lock.Unlock()
 

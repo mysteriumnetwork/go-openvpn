@@ -54,14 +54,14 @@ func (session *Session) Start(profile string, creds *Credentials) {
 	go func() {
 		defer session.finished.Done()
 
-		profileContent := NewCharPointer(profile)
-		defer profileContent.Delete()
+		profileContent := newCharPointer(profile)
+		defer profileContent.delete()
 
-		cUsername := NewCharPointer(creds.Username)
-		defer cUsername.Delete()
+		cUsername := newCharPointer(creds.Username)
+		defer cUsername.delete()
 
-		cPassword := NewCharPointer(creds.Password)
-		defer cPassword.Delete()
+		cPassword := newCharPointer(creds.Password)
+		defer cPassword.delete()
 
 		cCreds := expCredentials{
 			username: cUsername.Ptr,

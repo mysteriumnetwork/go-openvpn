@@ -262,7 +262,7 @@ var tunnelSetupRegistry = tunSetupRegistry{
 }
 
 func registerTunnelSetupDelegate(delegate TunnelSetup) (C.tun_builder_callbacks, func()) {
-	id, unregister := tunnelSetupRegistry.Register(delegate)
+	id, unregister := tunnelSetupRegistry.register(delegate)
 	return C.tun_builder_callbacks{
 		usrData: C.user_callback_data(id),
 		//delegates to go callbacks
