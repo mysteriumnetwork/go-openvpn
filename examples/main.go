@@ -67,7 +67,7 @@ func main() {
 		Password: "def",
 	}
 
-	session.Start(string(bytes), creds)
+	session.Start(string(bytes), &creds)
 	err = session.Wait()
 	if err != nil {
 		fmt.Println("Openvpn3 error: ", err)
