@@ -14,7 +14,7 @@ type Event struct {
 }
 
 type EventConsumer interface {
-	OnEvent(Event)
+	OnEvent(*Event)
 }
 
 type Statistics struct {
@@ -23,18 +23,18 @@ type Statistics struct {
 }
 
 type StatsConsumer interface {
-	OnStats(Statistics)
+	OnStats(*Statistics)
 }
 
-type Unregister func()
+type unregister func()
 
-type CallbackRegistry struct {
+type callbackRegistry struct {
 	lock   sync.Locker
 	idMap  map[int]interface{}
 	lastId int
 }
 
-func (cr *CallbackRegistry) register(callbacks interface{}) (int, Unregister) {
+func (cr *callbackRegistry) register(callbacks interface{}) (int, unregister) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 
@@ -48,13 +48,13 @@ func (cr *CallbackRegistry) register(callbacks interface{}) (int, Unregister) {
 	}
 }
 
-func (cr *CallbackRegistry) unregister(id int) {
+func (cr *callbackRegistry) unregister(id int) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 	delete(cr.idMap, id)
 }
 
-func (cr *CallbackRegistry) Log(id int, text string) {
+func (cr *callbackRegistry) log(id int, text string) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 	callback, ok := cr.idMap[id]
@@ -68,7 +68,7 @@ func (cr *CallbackRegistry) Log(id int, text string) {
 	logCallback.Log(text)
 }
 
-func (cr *CallbackRegistry) Event(id int, event Event) {
+func (cr *callbackRegistry) event(id int, event Event) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 	callback, ok := cr.idMap[id]
@@ -79,11 +79,11 @@ func (cr *CallbackRegistry) Event(id int, event Event) {
 	if !ok {
 		return
 	}
-	eventCallback.OnEvent(event)
+	eventCallback.OnEvent(&event)
 
 }
 
-func (cr *CallbackRegistry) Stats(id int, stats Statistics) {
+func (cr *callbackRegistry) stats(id int, stats Statistics) {
 	cr.lock.Lock()
 	defer cr.lock.Unlock()
 	callback, ok := cr.idMap[id]
@@ -94,12 +94,12 @@ func (cr *CallbackRegistry) Stats(id int, stats Statistics) {
 	if !ok {
 		return
 	}
-	statsCallback.OnStats(stats)
+	statsCallback.OnStats(&stats)
 
 }
 
-func NewCallbackRegistry() *CallbackRegistry {
-	return &CallbackRegistry{
+func newCallbackRegistry() *callbackRegistry {
+	return &callbackRegistry{
 		lastId: 0,
 		idMap:  make(map[int]interface{}),
 		lock:   &sync.Mutex{},

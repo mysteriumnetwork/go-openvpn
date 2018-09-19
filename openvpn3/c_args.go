@@ -4,39 +4,39 @@ package openvpn3
 import "C"
 import "unsafe"
 
-type CCharPointer struct {
+type cCharPointer struct {
 	Ptr *C.char
 }
 
-func NewCharPointer(str string) *CCharPointer {
-	return &CCharPointer{
+func newCharPointer(str string) *cCharPointer {
+	return &cCharPointer{
 		Ptr: C.CString(str),
 	}
 }
 
-func (ptr *CCharPointer) Delete() {
+func (ptr *cCharPointer) delete() {
 	C.free(unsafe.Pointer(ptr.Ptr))
 }
 
-type CCharPointerArray struct {
+type cCharPointerArray struct {
 	pointers []*C.char
 }
 
-func (a *CCharPointerArray) AddAll(args ...string) {
+func (a *cCharPointerArray) addAll(args ...string) {
 	for _, arg := range args {
 		a.pointers = append(a.pointers, C.CString(arg))
 	}
 }
 
-func (a *CCharPointerArray) cPointer() **C.char {
+func (a *cCharPointerArray) cPointer() **C.char {
 	return (**C.char)(&a.pointers[0])
 }
 
-func (a *CCharPointerArray) cCount() C.int {
+func (a *cCharPointerArray) cCount() C.int {
 	return C.int(len(a.pointers))
 }
 
-func (a *CCharPointerArray) Free() {
+func (a *cCharPointerArray) free() {
 	for _, arg := range a.pointers {
 		C.free(unsafe.Pointer(arg))
 	}

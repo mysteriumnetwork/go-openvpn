@@ -5,5 +5,22 @@ os: linux
 
 install:
   - go get github.com/karalabe/xgo
+  - go get golang.org/x/mobile/cmd/gomobile
 
-script: ./check-all.sh
+script:
+  - ./check-all.sh
+
+#we are not ready for deployment yet - gomobile depends on xcode, and we didn't test it yet on xgo image
+#before_deploy:
+#  - mkdir -p tmp && mkdir -p artifacts
+#  - ./gomobile_ios.sh -o tmp/Openvpn3.framework && tar -zcvf artifacts/Openvpn3.framework.tar.gz tmp/Openvpn3.framework
+
+#deploy:
+#  provider: releases
+#  file_glob: true
+#  file: artifacts/*
+#  skip_cleanup: true
+#  api_key: "$GIT_RELEASES_API_KEY"
+#  on:
+#    branch: master
+#    tags: true

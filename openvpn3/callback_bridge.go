@@ -14,7 +14,7 @@ extern void goEventCallback(user_callback_data usrData, conn_event event);
 */
 import "C"
 
-var callbacks = NewCallbackRegistry()
+var callbacks = newCallbackRegistry()
 
 //export goStatsCallback
 func goStatsCallback(ptr C.user_callback_data, cStats C.conn_stats) {
@@ -22,14 +22,14 @@ func goStatsCallback(ptr C.user_callback_data, cStats C.conn_stats) {
 	var stats Statistics
 	stats.BytesIn = int(cStats.bytes_in)
 	stats.BytesOut = int(cStats.bytes_out)
-	callbacks.Stats(id, stats)
+	callbacks.stats(id, stats)
 }
 
 //export goLogCallback
 func goLogCallback(ptr C.user_callback_data, cStr *C.char) {
 	goStr := C.GoString(cStr)
 	id := int(ptr)
-	callbacks.Log(id, goStr)
+	callbacks.log(id, goStr)
 }
 
 //export goEventCallback
@@ -40,7 +40,7 @@ func goEventCallback(ptr C.user_callback_data, cEvent C.conn_event) {
 	e.Fatal = bool(cEvent.fatal)
 	e.Name = C.GoString(cEvent.name)
 	e.Info = C.GoString(cEvent.info)
-	callbacks.Event(id, e)
+	callbacks.event(id, e)
 }
 
 func SelfCheck(logger Logger) {
