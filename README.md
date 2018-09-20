@@ -16,9 +16,14 @@ go get github.com/karalabe/xgo
 go get golang.org/x/mobile/cmd/gomobile
 ```
 
-* **Step 2.** Build example
+* **Step 2.** Build example (Desktop)
 ```bash
 go run examples/desktop/main.go examples/profile.ovpn
+```
+
+* **Step 3.** Build example (iOS)
+```bash
+./gomobile_example_ios.sh
 ```
 
 ## Build
