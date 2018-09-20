@@ -30,17 +30,34 @@ import (
 )
 
 type Session struct {
-	finished   *sync.WaitGroup
-	resError   error
-	callbacks  interface{}
-	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
+	finished    *sync.WaitGroup
+	resError    error
+	callbacks   interface{}
+	tunnelSetup TunnelSetup
+	sessionPtr  unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
-func NewSession(callbacks interface{}, tunSetup TunnelSetup) *Session {
+func NewSession(callbacks interface{}) *Session {
 	return &Session{
-		callbacks: callbacks,
-		resError:  nil,
-		finished:  &sync.WaitGroup{},
+		callbacks:   callbacks,
+		resError:    nil,
+		finished:    &sync.WaitGroup{},
+		tunnelSetup: &NoOpTunnelSetup{},
+	}
+}
+
+type MobileSessionCallbacks interface {
+	EventConsumer
+	Logger
+	StatsConsumer
+}
+
+func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
+	return &Session{
+		callbacks:   callbacks,
+		resError:    nil,
+		finished:    &sync.WaitGroup{},
+		tunnelSetup: tunSetup,
 	}
 }
 

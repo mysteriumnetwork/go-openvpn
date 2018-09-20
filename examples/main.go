@@ -54,7 +54,7 @@ func main() {
 
 	openvpn3.SelfCheck(logger)
 
-	session := openvpn3.NewSession(&loggingCallbacks{}, &openvpn3.NoOpTunnelSetup{})
+	session := openvpn3.NewSession(&loggingCallbacks{})
 
 	bytes, err := ioutil.ReadFile(profileName)
 	if err != nil {
