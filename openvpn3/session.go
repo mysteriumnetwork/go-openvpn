@@ -36,7 +36,6 @@ package openvpn3
 #cgo windows LDFLAGS: -lws2_32 -liphlpapi
 
 #include <library.h>
-#include <tunsetup.h>
 
 */
 import "C"
@@ -88,55 +87,38 @@ var ErrInitFailed = errors.New("openvpn3 init failed")
 // ErrConnectFailed is the error we return when openvpn3 fails to connect
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
-type expConfig C.config
-type expUserCredentials C.user_credentials
-
 // Start starts the session
 func (session *Session) Start(profile string, creds Credentials) {
 	session.finished.Add(1)
 	go func() {
 		defer session.finished.Done()
 
-		profileContent := newCharPointer(profile)
-		defer profileContent.delete()
-
-		guiVersion := newCharPointer("cli 1.0")
-		defer guiVersion.delete()
-
-		compressionMode := newCharPointer("yes")
-		defer compressionMode.delete()
-
-		cConfig := expConfig{
-			profileContent:    profileContent.Ptr,
-			guiVersion:        guiVersion.Ptr,
-			info:              true,
-			clockTickMS:       1000, // ticks every 1 sec
-			disableClientCert: true,
-			connTimeout:       10, // 10 seconds
-			tunPersist:        true,
-			compressionMode:   compressionMode.Ptr,
+		config := Config{
+			ProfileContent:    profile,
+			GuiVersion:        "cli 1.0",
+			Info:              true,
+			ClockTickMS:       1000, // ticks every 1 sec
+			DisableClientCert: true,
+			ConnTimeout:       10, // 10 seconds
+			TunPersist:        true,
+			CompressionMode:   "yes",
 		}
+		cConfig, cConfigUnregister := config.toPtr()
+		defer cConfigUnregister()
 
-		cUsername := newCharPointer(creds.Username)
-		defer cUsername.delete()
-
-		cPassword := newCharPointer(creds.Password)
-		defer cPassword.delete()
-
-		cCreds := expUserCredentials{
-			username: cUsername.Ptr,
-			password: cPassword.Ptr,
-		}
+		cCreds, cCredsUnregister := creds.toPtr()
+		defer cCredsUnregister()
 
 		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
 
 		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(&NoOpTunnelSetup{})
 		defer removeTunCallbacks()
+		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
-			C.config(cConfig),
-			C.user_credentials(cCreds),
+			cConfig,
+			cCreds,
 			C.callbacks_delegate(callbacksDelegate),
 			C.tun_builder_callbacks(tunBuilderCallbacks),
 		)
