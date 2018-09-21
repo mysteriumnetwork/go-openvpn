@@ -88,7 +88,8 @@ var ErrInitFailed = errors.New("openvpn3 init failed")
 // ErrConnectFailed is the error we return when openvpn3 fails to connect
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
-type expCredentials C.user_credentials
+type expConfig C.config
+type expUserCredentials C.user_credentials
 
 // Start starts the session
 func (session *Session) Start(profile string, creds Credentials) {
@@ -99,13 +100,30 @@ func (session *Session) Start(profile string, creds Credentials) {
 		profileContent := newCharPointer(profile)
 		defer profileContent.delete()
 
+		guiVersion := newCharPointer("cli 1.0")
+		defer guiVersion.delete()
+
+		compressionMode := newCharPointer("yes")
+		defer compressionMode.delete()
+
+		cConfig := expConfig{
+			profileContent:    profileContent.Ptr,
+			guiVersion:        guiVersion.Ptr,
+			info:              true,
+			clockTickMS:       1000, // ticks every 1 sec
+			disableClientCert: true,
+			connTimeout:       10, // 10 seconds
+			tunPersist:        true,
+			compressionMode:   compressionMode.Ptr,
+		}
+
 		cUsername := newCharPointer(creds.Username)
 		defer cUsername.delete()
 
 		cPassword := newCharPointer(creds.Password)
 		defer cPassword.delete()
 
-		cCreds := expCredentials{
+		cCreds := expUserCredentials{
 			username: cUsername.Ptr,
 			password: cPassword.Ptr,
 		}
@@ -117,7 +135,7 @@ func (session *Session) Start(profile string, creds Credentials) {
 		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
-			profileContent.Ptr,
+			C.config(cConfig),
 			C.user_credentials(cCreds),
 			C.callbacks_delegate(callbacksDelegate),
 			C.tun_builder_callbacks(tunBuilderCallbacks),
