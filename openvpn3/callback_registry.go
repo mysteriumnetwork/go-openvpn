@@ -14,7 +14,7 @@ type Event struct {
 }
 
 type EventConsumer interface {
-	OnEvent(*Event)
+	OnEvent(Event)
 }
 
 type Statistics struct {
@@ -23,7 +23,7 @@ type Statistics struct {
 }
 
 type StatsConsumer interface {
-	OnStats(*Statistics)
+	OnStats(Statistics)
 }
 
 type unregister func()
@@ -79,7 +79,7 @@ func (cr *callbackRegistry) event(id int, event Event) {
 	if !ok {
 		return
 	}
-	eventCallback.OnEvent(&event)
+	eventCallback.OnEvent(event)
 
 }
 
@@ -94,7 +94,7 @@ func (cr *callbackRegistry) stats(id int, stats Statistics) {
 	if !ok {
 		return
 	}
-	statsCallback.OnStats(&stats)
+	statsCallback.OnStats(stats)
 
 }
 

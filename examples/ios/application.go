@@ -23,11 +23,11 @@ func (lc *loggingCallbacks) Log(text string) {
 	}
 }
 
-func (lc *loggingCallbacks) OnEvent(event *openvpn3.Event) {
+func (lc *loggingCallbacks) OnEvent(event openvpn3.Event) {
 	fmt.Printf("Openvpn event >> %+v\n", event)
 }
 
-func (lc *loggingCallbacks) OnStats(stats *openvpn3.Statistics) {
+func (lc *loggingCallbacks) OnStats(stats openvpn3.Statistics) {
 	fmt.Printf("Openvpn stats >> %+v\n", stats)
 }
 
@@ -56,7 +56,7 @@ func StartSession() {
 	}
 
 	session := openvpn3.NewMobileSession(&loggingCallbacks{}, &openvpn3.NoOpTunnelSetup{})
-	session.Start(profile, &profileCreds)
+	session.Start(profile, profileCreds)
 
 	err := session.Wait()
 	if err != nil {
