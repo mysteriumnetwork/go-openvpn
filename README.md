@@ -10,18 +10,23 @@ limitation - can only work as client only.
 
 ## Development environment
 
-* **Step 1.** Get project dependencies
+* **Step 1.** Get development dependencies
 ```bash
 go get github.com/karalabe/xgo
 go get golang.org/x/mobile/cmd/gomobile
 ```
 
-* **Step 2.** Build example (Desktop)
+* **Step 2.** Get project dependencies
+```bash
+make deps
+```
+
+* **Step 3.** Build example (Desktop)
 ```bash
 go run examples/desktop/main.go examples/profile.ovpn
 ```
 
-* **Step 3.** Build example (iOS)
+* **Step 4.** Build example (iOS)
 ```bash
 ./gomobile_example_ios.sh
 ```

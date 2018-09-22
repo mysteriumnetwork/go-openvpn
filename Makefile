@@ -6,5 +6,8 @@ default: help
 help:
 	go run ci/main.go help
 
-test:
+deps:
+	go run ci/main.go deps
+
+test: deps
 	go run ci/main.go test

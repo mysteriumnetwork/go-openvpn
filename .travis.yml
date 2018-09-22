@@ -1,8 +1,9 @@
-language: go
 sudo: true #for docker service to be enabled
 os: linux
+language: go
 
 install:
+  - make deps
   - go get github.com/karalabe/xgo
   - go get golang.org/x/mobile/cmd/gomobile
 

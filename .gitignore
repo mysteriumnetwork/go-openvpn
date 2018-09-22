@@ -1,3 +1,4 @@
-*.ovpn
-build/
+/vendor
+/build
 .idea/
+*.ovpn

@@ -13,6 +13,7 @@ Usage:
 	go run ci/main.go <command>
 
 The commands are:
+	deps      installs all project dependencies
 	test      Runs all unit tests in project
 	help      Shows a list of commands
 `
@@ -25,6 +26,8 @@ The commands are:
 
 	command := strings.ToLower(args[0])
 	switch command {
+	case "deps":
+		commands.CommandDependencies(args[1:])
 	case "test":
 		commands.CommandTestUnit(args[1:])
 	case "help":
