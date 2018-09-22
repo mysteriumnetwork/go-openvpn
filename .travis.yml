@@ -2,12 +2,12 @@ language: go
 sudo: true #for docker service to be enabled
 os: linux
 
-
 install:
   - go get github.com/karalabe/xgo
   - go get golang.org/x/mobile/cmd/gomobile
 
 script:
+  - scripts/xgo_run.sh make test
   - ./check-all.sh $PWD/examples/desktop
   - ./check-all.sh $PWD/examples/ios
 

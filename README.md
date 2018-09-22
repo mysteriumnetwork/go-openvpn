@@ -26,6 +26,13 @@ go run examples/desktop/main.go examples/profile.ovpn
 ./gomobile_example_ios.sh
 ```
 
+## Run tests
+```
+make test
+# We recommend running tests on frozen Linux container
+scripts/xgo_run.sh make test
+```
+
 ## Build
 * **Step 1.** Sanity check
 ```bash
