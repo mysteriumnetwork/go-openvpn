@@ -18,6 +18,19 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:ae63eaa049fa6d0f54a969bc6f834e8cb3abb5b8a259ee7fa7fab751ed01af93"
+  name = "github.com/magefile/mage"
+  packages = [
+    "mage",
+    "mg",
+    "parse",
+    "sh",
+  ]
+  pruneopts = "UT"
+  revision = "a8460f7aa9523266febfca9df7a45025b7460152"
+  version = "v1.6.2"
+
+[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
@@ -46,6 +59,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/cihub/seelog",
+    "github.com/magefile/mage/mage",
     "github.com/stretchr/testify/assert",
     "github.com/urfave/cli",
   ]

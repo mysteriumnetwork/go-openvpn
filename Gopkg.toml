@@ -24,6 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
+required = ["github.com/magefile/mage/mage"]
 
 [[constraint]]
   name = "github.com/cihub/seelog"
