@@ -27,9 +27,13 @@ import (
 	log "github.com/cihub/seelog"
 )
 
+// CommandFunc represents the func for running external commands
+type CommandFunc func(name string, arg ...string) *exec.Cmd
+
 // NewCmdWrapper returns process wrapper for given executable
-func NewCmdWrapper(executablePath, logPrefix string) *CmdWrapper {
+func NewCmdWrapper(executablePath, logPrefix string, commandFunc CommandFunc) *CmdWrapper {
 	return &CmdWrapper{
+		command:            commandFunc,
 		logPrefix:          logPrefix,
 		executablePath:     executablePath,
 		CmdExitError:       make(chan error, 1), //channel should have capacity to hold single process exit error
@@ -40,6 +44,7 @@ func NewCmdWrapper(executablePath, logPrefix string) *CmdWrapper {
 
 // CmdWrapper struct defines process wrapper which handles clean shutdown, tracks executable exit errors, logs stdout and stderr to logger
 type CmdWrapper struct {
+	command            CommandFunc
 	logPrefix          string
 	executablePath     string
 	CmdExitError       chan error
@@ -52,7 +57,7 @@ type CmdWrapper struct {
 func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
 	log.Info(cw.logPrefix, "Starting cmd: ", cw.executablePath, " with arguments: ", arguments)
-	cmd := exec.Command(cw.executablePath, arguments...)
+	cmd := cw.command(cw.executablePath, arguments...)
 
 	// Attach logger for stdout and stderr
 	stdout, err := cmd.StdoutPipe()

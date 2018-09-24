@@ -18,6 +18,7 @@
 package openvpn
 
 import (
+	"os/exec"
 	"sync"
 	"testing"
 	"time"
@@ -25,8 +26,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestHelperProcess IS ESENTIAL FOR CMD MOCKING - DO NOT DELETE
+func TestHelperProcess(t *testing.T) {
+	RunTestExecCmd()
+}
+
 func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
-	process := NewCmdWrapper("testdata/infinite-loop.sh", "[process-log] ")
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := execTestHelper.ExecCommand
+	defer func() { execCommand = exec.Command }()
+	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
+
+	process := NewCmdWrapper("openvpn", "[process-log] ", execCommand)
 	processStarted := sync.WaitGroup{}
 	processStarted.Add(1)
 
@@ -60,7 +71,12 @@ func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 }
 
 func TestWaitReturnsIfProcessDies(t *testing.T) {
-	process := NewCmdWrapper("testdata/100-milisec-process.sh", "[process-log] ")
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := execTestHelper.ExecCommand
+	defer func() { execCommand = exec.Command }()
+	execTestHelper.AddExecResult("", "", 0, 100, "openvpn")
+
+	process := NewCmdWrapper("openvpn", "[process-log] ", execCommand)
 	processWaitExited := make(chan int, 1)
 
 	go func() {

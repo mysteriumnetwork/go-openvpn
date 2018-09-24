@@ -19,6 +19,7 @@ package openvpn
 
 import (
 	"errors"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -45,7 +46,7 @@ func newProcess(
 		tunnelSetup: tunnelSetup,
 		config:      config,
 		management:  management.NewManagement(management.LocalhostOnRandomPort, "[client-management] ", middlewares...),
-		cmd:         NewCmdWrapper(openvpnBinary, "[openvpn-process] "),
+		cmd:         NewCmdWrapper(openvpnBinary, "[openvpn-process] ", exec.Command),
 	}
 }
 
