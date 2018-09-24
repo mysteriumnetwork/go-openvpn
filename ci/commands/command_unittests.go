@@ -1,10 +1,11 @@
 package commands
 
-import "fmt"
+import (
+	"github.com/magefile/mage/sh"
+)
 
-// CommandTestUnit runs all unit tests in project
-func CommandTestUnit(_ []string) {
-	MustRun("go", "test", "./...")
-
-	fmt.Printf("All tests passed.")
+// RunTests runs the tests
+func RunTests() error {
+	err := sh.RunV("go", "test", "../...")
+	return err
 }
