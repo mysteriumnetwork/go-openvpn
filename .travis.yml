@@ -8,7 +8,8 @@ install:
   - go get golang.org/x/mobile/cmd/gomobile
 
 script:
-  - ./check-all.sh
+  - ./check-all.sh $PWD/examples/desktop
+  - ./check-all.sh $PWD/examples/ios
 
 #we are not ready for deployment yet - gomobile depends on xcode, and we didn't test it yet on xgo image
 #before_deploy:
