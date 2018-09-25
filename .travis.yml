@@ -27,7 +27,7 @@ jobs:
 
     # Test stage
     - stage: test
-      script: scripts/xgo_run.sh make test
+      script: scripts/xgo_run.sh apt-get install -y netcat && make test
       name: "Unit tests"
 
     # Build artifacts
@@ -46,8 +46,7 @@ jobs:
     - stage: release
       script:
       - go get golang.org/x/mobile/cmd/gomobile
-      - mkdir -p tmp
-      - mkdir -p artifacts
+      - mkdir -p tmp artifacts
       - ./gomobile_ios.sh -o tmp/Openvpn3.framework
       - tar -zcvf artifacts/Openvpn3.framework.tar.gz tmp/Openvpn3.framework
       name: "Official release (on tags only)"
