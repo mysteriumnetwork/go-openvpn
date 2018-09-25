@@ -40,13 +40,14 @@ func newProcess(
 	openvpnBinary string,
 	tunnelSetup tunnel.Setup,
 	config *config.GenericConfig,
+	execCommand func(name string, arg ...string) *exec.Cmd,
 	middlewares ...management.Middleware,
 ) *OpenvpnProcess {
 	return &OpenvpnProcess{
 		tunnelSetup: tunnelSetup,
 		config:      config,
 		management:  management.NewManagement(management.LocalhostOnRandomPort, "[client-management] ", middlewares...),
-		cmd:         NewCmdWrapper(openvpnBinary, "[openvpn-process] ", exec.Command),
+		cmd:         NewCmdWrapper(openvpnBinary, "[openvpn-process] ", execCommand),
 	}
 }
 

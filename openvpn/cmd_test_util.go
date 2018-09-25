@@ -22,10 +22,14 @@ package openvpn
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -33,6 +37,7 @@ const execTestExitCodeKey = "EXEC_HELPER_EXIT_CODE"
 const execTestStdOutputKey = "EXEC_HELPER_STDOUT"
 const execTestStdErrorKey = "EXEC_HELPER_STDERR"
 const execTestDelayKey = "EXEC_HELPER_DELAY_MILISECONDS"
+const execTestArgsKey = "EXEC_HELPER_ARGS"
 
 type ExecCmdTestResult struct {
 	command  string
@@ -77,7 +82,7 @@ func NewExecCmdTestHelper(testHelperFuncName string) *ExecCmdTestHelper {
 // the process will exit with the exit code given.
 func (e *ExecCmdTestHelper) AddExecResult(stdOut, stdErr string, exitCode int, delayMiliseconds int, command ...string) {
 	fullCommand := strings.Join(command, " ")
-	base64Command := base64.StdEncoding.EncodeToString([]byte(fullCommand))
+	base64Command := base64.StdEncoding.EncodeToString([]byte(command[0]))
 
 	result := ExecCmdTestResult{
 		stdOut:   stdOut,
@@ -107,7 +112,7 @@ func (e *ExecCmdTestHelper) ExecCommand(command string, args ...string) *exec.Cm
 		fullCommand = command + " " + strings.Join(args, " ")
 	}
 
-	base64Command := base64.StdEncoding.EncodeToString([]byte(fullCommand))
+	base64Command := base64.StdEncoding.EncodeToString([]byte(strings.Fields(fullCommand)[0]))
 
 	if len(e.testResults[base64Command]) == 0 {
 		fmt.Println("No result was setup for command: ", fullCommand)
@@ -122,11 +127,12 @@ func (e *ExecCmdTestHelper) ExecCommand(command string, args ...string) *exec.Cm
 		e.testResults[base64Command] = e.testResults[base64Command][1:]
 	}
 
+	ar := execTestArgsKey + "=" + strings.Join(args, " ")
 	stdout := execTestStdOutputKey + "=" + mockResults.stdOut
 	stderr := execTestStdErrorKey + "=" + mockResults.stdErr
 	exitCode := execTestExitCodeKey + "=" + strconv.FormatInt(int64(mockResults.exitCode), 10)
 	delay := execTestDelayKey + "=" + strconv.FormatInt(int64(mockResults.delay), 10)
-	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", stdout, stderr, exitCode, delay}
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1", stdout, stderr, exitCode, delay, ar}
 
 	return cmd
 }
@@ -158,6 +164,58 @@ func RunTestExecCmd() {
 
 	fmt.Fprintf(os.Stdout, stdout)
 	fmt.Fprintf(os.Stderr, stderr)
-
 	os.Exit(int(exitCode))
+}
+
+func startFakeOpenvpnManagement(address, port string, stop chan struct{}) {
+	addr := fmt.Sprintf("%v:%v", address, port)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		log.Fatal("start error", err)
+	}
+	conn.Write([]byte(">INFO:OpenVPN Management Interface Version 1 -- type 'help' for more info\n"))
+	conn.Write([]byte(">STATE:1522855903,CONNECTING,,,,,,\n"))
+
+	conn.Write([]byte(">STATE:1522855903,WAIT,,,,,,\n"))
+	conn.Write([]byte(">STATE:1522855903,AUTH,,,,,,\n"))
+	conn.Write([]byte(">STATE:1522855904,GET_CONFIG,,,,,,\n"))
+	conn.Write([]byte(">STATE:1522855904,ASSIGN_IP,,10.8.0.133,,,,\n"))
+	conn.Write([]byte(fmt.Sprintf(">STATE:1522855905,CONNECTED,SUCCESS,10.8.0.133,%v,%v,,\n", address, port)))
+
+	for {
+		select {
+		case <-stop:
+			conn.Write([]byte(">STATE:1522855911,EXITING,SIGTERM,,,,,\n"))
+			conn.Close()
+			return
+		case <-time.After(100 * time.Millisecond):
+			conn.Write([]byte(">BYTECOUNT:36987,32252\n"))
+		}
+	}
+}
+
+// RunTestExecOpenvpn will run a simulated openvpn management
+func RunTestExecOpenvpn() {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	sigc := make(chan os.Signal, 1)
+	stop := make(chan struct{})
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigc
+		stop <- struct{}{}
+	}()
+
+	args := strings.Fields(os.Getenv(execTestArgsKey))
+	port := args[2]
+	address := args[1]
+
+	startFakeOpenvpnManagement(address, port, stop)
+
+	os.Exit(int(0))
 }

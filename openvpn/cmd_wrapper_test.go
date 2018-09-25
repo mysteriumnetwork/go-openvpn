@@ -18,7 +18,6 @@
 package openvpn
 
 import (
-	"os/exec"
 	"sync"
 	"testing"
 	"time"
@@ -34,7 +33,6 @@ func TestHelperProcess(t *testing.T) {
 func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
 	execCommand := execTestHelper.ExecCommand
-	defer func() { execCommand = exec.Command }()
 	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
 
 	process := NewCmdWrapper("openvpn", "[process-log] ", execCommand)
@@ -73,7 +71,6 @@ func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 func TestWaitReturnsIfProcessDies(t *testing.T) {
 	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
 	execCommand := execTestHelper.ExecCommand
-	defer func() { execCommand = exec.Command }()
 	execTestHelper.AddExecResult("", "", 0, 100, "openvpn")
 
 	process := NewCmdWrapper("openvpn", "[process-log] ", execCommand)
