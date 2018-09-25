@@ -153,7 +153,6 @@ func RunTestExecCmd() {
 	}
 
 	if delayMillis != 0 {
-		fmt.Println("SLEEPING")
 		time.Sleep(time.Millisecond * time.Duration(delayMillis))
 	}
 

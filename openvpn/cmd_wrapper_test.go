@@ -87,7 +87,7 @@ func TestWaitReturnsIfProcessDies(t *testing.T) {
 	assert.NoError(t, process.Start([]string{}))
 	select {
 	case <-processWaitExited:
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(3000 * time.Millisecond):
 		assert.Fail(t, "CmdWrapper.Wait() didn't return on time")
 	}
 }

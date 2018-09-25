@@ -6,6 +6,6 @@ import (
 
 // RunTests runs the tests
 func RunTests() error {
-	err := sh.RunV("go", "test", "../...")
+	err := sh.RunV("go", "test", "-race", "-cover", "../...")
 	return err
 }

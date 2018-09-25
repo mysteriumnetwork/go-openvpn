@@ -27,7 +27,7 @@ jobs:
 
     # Test stage
     - stage: test
-      script: scripts/xgo_run.sh apt-get install -y netcat && make test
+      script: scripts/xgo_run.sh make test
       name: "Unit tests"
 
     # Build artifacts
