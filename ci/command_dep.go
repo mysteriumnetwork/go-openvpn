@@ -6,12 +6,16 @@ import (
 	"fmt"
 
 	"github.com/magefile/mage/sh"
+	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
 // Installs the package mangement tool - dep
 func Dep() error {
-	err := sh.Run("which", "dep")
-	if err == nil {
+	path, err := util.GetGoBinaryPath("dep")
+	if err != nil {
+		return err
+	}
+	if path != "" {
 		fmt.Println("Tool 'dep' already installed")
 		return nil
 	}
