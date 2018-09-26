@@ -11,15 +11,12 @@ import (
 
 // Installs the package mangement tool - dep
 func Dep() error {
-	path, err := util.GetGoBinaryPath("dep")
-	if err != nil {
-		return err
-	}
+	path, _ := util.GetGoBinaryPath("dep")
 	if path != "" {
 		fmt.Println("Tool 'dep' already installed")
 		return nil
 	}
-	err = sh.RunV("go", "get", "github.com/golang/dep/cmd/dep")
+	err := sh.RunV("go", "get", "github.com/golang/dep/cmd/dep")
 	if err != nil {
 		fmt.Println("Could not go get dep")
 		return err

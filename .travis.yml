@@ -33,6 +33,9 @@ jobs:
     - script: make vet
       name: "Vet check" 
 
+    - script: make golint
+      name: "Golint check" 
+
     # Build artifacts
     - stage: build
       script:
