@@ -1,6 +1,7 @@
 package util
 
 import (
+	"go/build"
 	"os"
 	"path"
 
@@ -14,6 +15,9 @@ func GetGoBinaryPath(binaryName string) (string, error) {
 		return res, nil
 	}
 	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = build.Default.GOPATH
+	}
 	binaryUnderGopath := path.Join(gopath, "bin", binaryName)
 	if _, err := os.Stat(binaryUnderGopath); os.IsNotExist(err) {
 		return "", err
