@@ -29,6 +29,9 @@ jobs:
     - stage: test
       script: scripts/xgo_run.sh make test
       name: "Unit tests"
+    
+    - script: make vet
+      name: "Vet check" 
 
     # Build artifacts
     - stage: build
