@@ -64,6 +64,7 @@ func beautiflyPrintGoLintOutput(rawGolint string) {
 	}
 }
 
+// Reports linting errors in the solution
 func GoLint() error {
 	mg.Deps(GetLint)
 	path, err := util.GetGoBinaryPath("golint")

@@ -37,7 +37,10 @@ jobs:
       name: "Golint check" 
     
     - script: make copyright
-      name: "Copyright check" 
+      name: "Copyright check"
+
+    - script: make goimports
+      name: "Goimports check" 
 
     # Build artifacts
     - stage: build

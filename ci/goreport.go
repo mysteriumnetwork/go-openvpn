@@ -27,7 +27,7 @@ func updateReport() error {
 	return nil
 }
 
-// updates the go report for the repo
+// Updates the go report for the repo
 func GoReport() error {
 	err := updateReport()
 	if err != nil {

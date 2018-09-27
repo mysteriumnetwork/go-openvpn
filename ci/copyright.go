@@ -40,7 +40,7 @@ func getFilesWithoutCopyright() ([]string, error) {
 	return badFiles, err
 }
 
-// checks for copyright headers in files
+// Checks for copyright headers in files
 func Copyright() error {
 	badFiles, err := getFilesWithoutCopyright()
 	if err != nil {
