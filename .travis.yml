@@ -33,12 +33,12 @@ jobs:
     # Build artifacts
     - stage: build
       script:
-      - go get github.com/karalabe/xgo
+      - go get github.com/mysteriumnetwork/xgo
       - ./check-all.sh $PWD/examples/desktop
       name: "Build example (Desktop)"
 
     - script:
-      - go get github.com/karalabe/xgo
+      - go get github.com/mysteriumnetwork/xgo
       - ./check-all.sh $PWD/examples/ios
       name: "Build example (iOS)"
 
