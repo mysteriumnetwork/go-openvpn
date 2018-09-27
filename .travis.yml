@@ -35,6 +35,9 @@ jobs:
 
     - script: make golint
       name: "Golint check" 
+    
+    - script: make copyright
+      name: "Copyright check" 
 
     # Build artifacts
     - stage: build
