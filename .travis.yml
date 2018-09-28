@@ -1,7 +1,7 @@
 sudo: true #for docker service to be enabled
 os: linux
 language: go
-go: [1.9.2]
+go: ["1.11"]
 cache:
   directories:
     - vendor
