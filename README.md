@@ -1,5 +1,6 @@
 # go-openvpn
 
+[![Build Status](https://travis-ci.com/mysteriumnetwork/go-openvpn.svg?branch=master)](https://travis-ci.com/mysteriumnetwork/go-openvpn)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mysteriumnetwork/go-openvpn)](https://goreportcard.com/report/github.com/mysteriumnetwork/go-openvpn)
 
 Go gettable library for wrapping openvpn functionality in go way.
