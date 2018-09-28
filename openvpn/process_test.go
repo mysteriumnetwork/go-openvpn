@@ -18,6 +18,7 @@
 package openvpn
 
 import (
+	"os/exec"
 	"testing"
 	"time"
 
@@ -34,9 +35,11 @@ func TestHelperProcess_Openvpn(t *testing.T) {
 
 func TestOpenvpnProcessStartsAndStopsSuccessfully(t *testing.T) {
 	execTestHelper := NewExecCmdTestHelper("TestHelperProcess_Openvpn")
-	execCommand := execTestHelper.ExecCommand
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
 	execTestHelper.AddExecResult("", "", 0, 0, "openvpn")
-	process := newProcess("openvpn", &tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
 
 	err := process.Start()
 	assert.NoError(t, err)
@@ -51,10 +54,11 @@ func TestOpenvpnProcessStartsAndStopsSuccessfully(t *testing.T) {
 
 func TestOpenvpnProcessStartReportsErrorIfCmdWrapperDiesTooEarly(t *testing.T) {
 	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
-	execCommand := execTestHelper.ExecCommand
 	execTestHelper.AddExecResult("", "", 1, 0, "openvpn")
-
-	process := newProcess("openvpn", &tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
 
 	err := process.Start()
 	assert.Error(t, err)

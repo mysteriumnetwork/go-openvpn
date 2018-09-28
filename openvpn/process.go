@@ -37,17 +37,16 @@ type OpenvpnProcess struct {
 }
 
 func newProcess(
-	openvpnBinary string,
 	tunnelSetup tunnel.Setup,
 	config *config.GenericConfig,
-	execCommand func(name string, arg ...string) *exec.Cmd,
+	execCommand func(arg ...string) *exec.Cmd,
 	middlewares ...management.Middleware,
 ) *OpenvpnProcess {
 	return &OpenvpnProcess{
 		tunnelSetup: tunnelSetup,
 		config:      config,
 		management:  management.NewManagement(management.LocalhostOnRandomPort, "[client-management] ", middlewares...),
-		cmd:         NewCmdWrapper(openvpnBinary, "[openvpn-process] ", execCommand),
+		cmd:         NewCmdWrapper("[openvpn-process] ", execCommand),
 	}
 }
 

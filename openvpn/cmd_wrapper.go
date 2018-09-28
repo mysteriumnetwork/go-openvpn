@@ -28,14 +28,13 @@ import (
 )
 
 // CommandFunc represents the func for running external commands
-type CommandFunc func(name string, arg ...string) *exec.Cmd
+type CommandFunc func(arg ...string) *exec.Cmd
 
 // NewCmdWrapper returns process wrapper for given executable
-func NewCmdWrapper(executablePath, logPrefix string, commandFunc CommandFunc) *CmdWrapper {
+func NewCmdWrapper(logPrefix string, commandFunc CommandFunc) *CmdWrapper {
 	return &CmdWrapper{
 		command:            commandFunc,
 		logPrefix:          logPrefix,
-		executablePath:     executablePath,
 		CmdExitError:       make(chan error, 1), //channel should have capacity to hold single process exit error
 		cmdShutdownStarted: make(chan bool),
 		cmdShutdownWaiter:  sync.WaitGroup{},
@@ -46,7 +45,6 @@ func NewCmdWrapper(executablePath, logPrefix string, commandFunc CommandFunc) *C
 type CmdWrapper struct {
 	command            CommandFunc
 	logPrefix          string
-	executablePath     string
 	CmdExitError       chan error
 	cmdShutdownStarted chan bool
 	cmdShutdownWaiter  sync.WaitGroup
@@ -56,8 +54,9 @@ type CmdWrapper struct {
 // Start underlying binary defined by process wrapper with given arguments
 func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
-	log.Info(cw.logPrefix, "Starting cmd: ", cw.executablePath, " with arguments: ", arguments)
-	cmd := cw.command(cw.executablePath, arguments...)
+	cmd := cw.command(arguments...)
+
+	log.Info(cw.logPrefix, "Starting cmd: ", cmd.Args[0], " with arguments: ", arguments)
 
 	// Attach logger for stdout and stderr
 	stdout, err := cmd.StdoutPipe()
