@@ -26,6 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testProcessPrefix = "[process-test-log] "
+
 // TestHelperProcess IS ESENTIAL FOR CMD MOCKING - DO NOT DELETE
 func TestHelperProcess(t *testing.T) {
 	RunTestExecCmd()
@@ -38,7 +40,7 @@ func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 	}
 	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
 
-	process := NewCmdWrapper("[process-log] ", execCommand)
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
 	processStarted := sync.WaitGroup{}
 	processStarted.Add(1)
 
@@ -78,7 +80,7 @@ func TestWaitReturnsIfProcessDies(t *testing.T) {
 	}
 	execTestHelper.AddExecResult("", "", 0, 100, "openvpn")
 
-	process := NewCmdWrapper("[process-log] ", execCommand)
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
 	processWaitExited := make(chan int, 1)
 
 	go func() {

@@ -28,6 +28,9 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/tunnel"
 )
 
+const openvpnManagementLogPrefix = "[client-management] "
+const openvpnProcessLogPrefix = "[openvpn-process] "
+
 // OpenvpnProcess represents an openvpn process manager
 type OpenvpnProcess struct {
 	config      *config.GenericConfig
@@ -45,8 +48,8 @@ func newProcess(
 	return &OpenvpnProcess{
 		tunnelSetup: tunnelSetup,
 		config:      config,
-		management:  management.NewManagement(management.LocalhostOnRandomPort, "[client-management] ", middlewares...),
-		cmd:         NewCmdWrapper("[openvpn-process] ", execCommand),
+		management:  management.NewManagement(management.LocalhostOnRandomPort, openvpnManagementLogPrefix, middlewares...),
+		cmd:         NewCmdWrapper(openvpnProcessLogPrefix, execCommand),
 	}
 }
 
