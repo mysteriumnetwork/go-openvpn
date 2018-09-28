@@ -33,6 +33,20 @@ func TestHelperProcess(t *testing.T) {
 	RunTestExecCmd()
 }
 
+func TestWrapperStartReturnsErrorOnNoArgs(t *testing.T) {
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := func(arg ...string) *exec.Cmd {
+		cmd := execTestHelper.ExecCommand("openvpn", arg...)
+		cmd.Args = nil
+		return cmd
+	}
+	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
+
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
+	err := process.Start([]string{})
+	assert.NotNil(t, err)
+}
+
 func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
 	execCommand := func(arg ...string) *exec.Cmd {

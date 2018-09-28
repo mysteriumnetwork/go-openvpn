@@ -19,6 +19,7 @@ package openvpn
 
 import (
 	"bufio"
+	"errors"
 	"os/exec"
 	"sync"
 
@@ -55,6 +56,10 @@ type CmdWrapper struct {
 func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
 	cmd := cw.command(arguments...)
+
+	if len(cmd.Args) == 0 {
+		return errors.New("nothing to execute for an empty command")
+	}
 
 	log.Info(cw.logPrefix, "Starting cmd: ", cmd.Args[0], " with arguments: ", arguments)
 
