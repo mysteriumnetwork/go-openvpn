@@ -30,7 +30,7 @@ jobs:
       script: scripts/xgo_run.sh make test
       name: "Unit tests"
     
-    - script: make vet
+    - script: make govet
       name: "Vet check" 
 
     - script: make golint
@@ -54,7 +54,7 @@ jobs:
       - ./check-all.sh $PWD/examples/ios
       name: "Build example (iOS)"
 
-     - script: make goreport
+    - script: make goreport
       name: "Update goreport"
 
     # Official release (on tags only)

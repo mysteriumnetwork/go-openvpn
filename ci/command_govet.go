@@ -9,7 +9,7 @@ import (
 )
 
 // Checks that the source is compliant with go vet
-func Vet() error {
+func GoVet() error {
 	out, err := sh.Output("go", "vet", "-composites=false", "../...")
 	fmt.Print(out)
 	if err != nil {
