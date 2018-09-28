@@ -66,7 +66,7 @@ var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 type expCredentials C.user_credentials
 
-func (session *Session) Start(profile string, creds *Credentials) {
+func (session *Session) Start(profile string, creds Credentials) {
 	session.finished.Add(1)
 	go func() {
 		defer session.finished.Done()

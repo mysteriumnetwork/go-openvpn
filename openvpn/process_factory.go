@@ -18,6 +18,8 @@
 package openvpn
 
 import (
+	"os/exec"
+
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/config"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/tunnel"
@@ -26,5 +28,8 @@ import (
 // CreateNewProcess creates new openvpn process with given config params
 func CreateNewProcess(openvpnBinary string, config *config.GenericConfig, middlewares ...management.Middleware) *OpenvpnProcess {
 	tunnelSetup := tunnel.NewTunnelSetup()
-	return newProcess(openvpnBinary, tunnelSetup, config, middlewares...)
+	execCommand := func(arg ...string) *exec.Cmd {
+		return exec.Command(openvpnBinary, arg...)
+	}
+	return newProcess(tunnelSetup, config, execCommand, middlewares...)
 }

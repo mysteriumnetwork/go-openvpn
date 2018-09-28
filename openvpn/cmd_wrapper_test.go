@@ -18,6 +18,7 @@
 package openvpn
 
 import (
+	"os/exec"
 	"sync"
 	"testing"
 	"time"
@@ -25,8 +26,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testProcessPrefix = "[process-test-log] "
+
+// TestHelperProcess IS ESENTIAL FOR CMD MOCKING - DO NOT DELETE
+func TestHelperProcess(t *testing.T) {
+	RunTestExecCmd()
+}
+
+func TestWrapperStartReturnsErrorOnNoArgs(t *testing.T) {
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := func(arg ...string) *exec.Cmd {
+		cmd := execTestHelper.ExecCommand("openvpn", arg...)
+		cmd.Args = nil
+		return cmd
+	}
+	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
+
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
+	err := process.Start([]string{})
+	assert.NotNil(t, err)
+}
+
 func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
-	process := NewCmdWrapper("testdata/infinite-loop.sh", "[process-log] ")
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	execTestHelper.AddExecResult("", "", 0, 10000, "openvpn")
+
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
 	processStarted := sync.WaitGroup{}
 	processStarted.Add(1)
 
@@ -60,7 +88,13 @@ func TestWaitAndStopProcessDoesNotDeadLocks(t *testing.T) {
 }
 
 func TestWaitReturnsIfProcessDies(t *testing.T) {
-	process := NewCmdWrapper("testdata/100-milisec-process.sh", "[process-log] ")
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	execTestHelper.AddExecResult("", "", 0, 100, "openvpn")
+
+	process := NewCmdWrapper(testProcessPrefix, execCommand)
 	processWaitExited := make(chan int, 1)
 
 	go func() {
@@ -71,7 +105,7 @@ func TestWaitReturnsIfProcessDies(t *testing.T) {
 	assert.NoError(t, process.Start([]string{}))
 	select {
 	case <-processWaitExited:
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(3000 * time.Millisecond):
 		assert.Fail(t, "CmdWrapper.Wait() didn't return on time")
 	}
 }

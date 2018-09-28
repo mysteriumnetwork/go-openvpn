@@ -1,27 +1,72 @@
-language: go
 sudo: true #for docker service to be enabled
 os: linux
+language: go
+go: ["1.11"]
+cache:
+  directories:
+    - vendor
 
 
-install:
-  - go get github.com/karalabe/xgo
-  - go get golang.org/x/mobile/cmd/gomobile
+stages:
+  - dep-cache
+  - test
+  - name: build
+    if: (type != pull_request AND branch = master AND tag IS blank) OR tag IS present
+  - name: release
+    # we are not ready for deployment yet - gomobile depends on xcode, and we didn't test it yet on xgo image
+    #if: tag IS present
+    if: type = never
 
-script:
-  - ./check-all.sh $PWD/examples/desktop
-  - ./check-all.sh $PWD/examples/ios
 
-#we are not ready for deployment yet - gomobile depends on xcode, and we didn't test it yet on xgo image
-#before_deploy:
-#  - mkdir -p tmp && mkdir -p artifacts
-#  - ./gomobile_ios.sh -o tmp/Openvpn3.framework && tar -zcvf artifacts/Openvpn3.framework.tar.gz tmp/Openvpn3.framework
+jobs:
+  include:
+    # Dependencies cache stage
+    - stage: dep-cache
+      name: "Dependencies update"
+      script: make deps
 
-#deploy:
-#  provider: releases
-#  file_glob: true
-#  file: artifacts/*
-#  skip_cleanup: true
-#  api_key: "$GIT_RELEASES_API_KEY"
-#  on:
-#    branch: master
-#    tags: true
+    # Test stage
+    - stage: test
+      script: scripts/xgo_run.sh make test
+      name: "Unit tests"
+
+    # Build artifacts
+    - stage: build
+      script:
+      - go get github.com/mysteriumnetwork/xgo
+      - ./check-all.sh $PWD/examples/desktop
+      name: "Build example (Desktop)"
+
+    - script:
+      - go get github.com/mysteriumnetwork/xgo
+      - ./check-all.sh $PWD/examples/ios
+      name: "Build example (iOS)"
+
+    # Official release (on tags only)
+    - stage: release
+      script:
+      - go get golang.org/x/mobile/cmd/gomobile
+      - mkdir -p tmp artifacts
+      - ./gomobile_ios.sh -o tmp/Openvpn3.framework
+      - tar -zcvf artifacts/Openvpn3.framework.tar.gz tmp/Openvpn3.framework
+      name: "Official release (on tags only)"
+      deploy:
+        provider: releases
+        file_glob: true
+        file: artifacts/*
+        skip_cleanup: true
+        api_key: "$GIT_RELEASES_API_KEY"
+
+
+notifications:
+  slack:
+    rooms:
+      - secure: >
+          uzg7QbKd09rm6q/7iXk1HFfXo61vqFbENueRM/a6Jg+o2/YZEQXtKLO+gLg2gY/4ok9P4goUF8PuAA1/YLnhzJAr0ks35z69kns36E2eJkU2kB72D8
+          K44Mi5fhPFrcbbkPPqFtMoeXUkEjNvB6LT3w0xpWOUBS68N/HJrpi2Y3kn1tp96tcsneLyBick3JrlJc3aptHq/bNFLaWFS9orzcp9wWDjxNeWaVze
+          GM0Y1GCFQymff9UOf2r6Vy/MjESo9QjHH+gJbEzH13d6YcBi2ktZF3c6ZDqsjOOQZKQzwrgYk6sVLQsikDtA0vPgXVVyTVgcYmdTrNF6K/31Dt/e3K
+          gJXvpwn6tsW6o2DJJpq4MXFOm2z+S20KNbhSj5BLzYmVOKnJhyDAFFYWLDfF0ZJs3D0Pezjtu8HsMvkX3REYXUaBEZuRR4GRV4iqCdyHWKR+WGtX7Y
+          FfsaolqNiWAqHaACH5jL2oZ4DcwF3x0LfEpESJYJrmmUsCl0/siBe9e5zL3mpwdJ7vG2rH8XUsEJvHf5A8YSYOSLE06lPpioNjskKoGYT0/c8VNAty
+          OvkdfTsWhz6oCOAZyJsQPuW1vEkjdK/mkrj38g0K4RnMQ05aVbLlHkH+1OUzzPl/NVydoDYdTlkCYTDSL3vrD/Uh5uu57FDssUkz/joiuzixNkePo=
+    on_success: change
+    on_failure: always

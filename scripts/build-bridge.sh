@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -e
-
 . /go-src-root/scripts/helpers.sh
+
+cd /go-src-root/build
 rm -rf core
 fetch_openvpn3
 
+rm -rf /go-src-root/openvpn3/bridge/*.a /go-src-root/openvpn3/bridge/*.h
 cp -f core/adapter/*.h /go-src-root/openvpn3/bridge/.
 
-export O3=`pwd`
-export DEP_DIR=`pwd`/dep_dir
+export O3=$PWD
+export DEP_DIR=$PWD/dep_dir
 mkdir -p $DEP_DIR
-export DL=/build/dls
+export DL=$PWD/dls
 mkdir -p $DL
 
 echo "Deps are in: $DEP_DIR"

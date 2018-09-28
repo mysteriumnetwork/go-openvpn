@@ -19,6 +19,7 @@ package openvpn
 
 import (
 	"bufio"
+	"errors"
 	"os/exec"
 	"sync"
 
@@ -27,11 +28,14 @@ import (
 	log "github.com/cihub/seelog"
 )
 
+// CommandFunc represents the func for running external commands
+type CommandFunc func(arg ...string) *exec.Cmd
+
 // NewCmdWrapper returns process wrapper for given executable
-func NewCmdWrapper(executablePath, logPrefix string) *CmdWrapper {
+func NewCmdWrapper(logPrefix string, commandFunc CommandFunc) *CmdWrapper {
 	return &CmdWrapper{
+		command:            commandFunc,
 		logPrefix:          logPrefix,
-		executablePath:     executablePath,
 		CmdExitError:       make(chan error, 1), //channel should have capacity to hold single process exit error
 		cmdShutdownStarted: make(chan bool),
 		cmdShutdownWaiter:  sync.WaitGroup{},
@@ -40,8 +44,8 @@ func NewCmdWrapper(executablePath, logPrefix string) *CmdWrapper {
 
 // CmdWrapper struct defines process wrapper which handles clean shutdown, tracks executable exit errors, logs stdout and stderr to logger
 type CmdWrapper struct {
+	command            CommandFunc
 	logPrefix          string
-	executablePath     string
 	CmdExitError       chan error
 	cmdShutdownStarted chan bool
 	cmdShutdownWaiter  sync.WaitGroup
@@ -51,8 +55,13 @@ type CmdWrapper struct {
 // Start underlying binary defined by process wrapper with given arguments
 func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
-	log.Info(cw.logPrefix, "Starting cmd: ", cw.executablePath, " with arguments: ", arguments)
-	cmd := exec.Command(cw.executablePath, arguments...)
+	cmd := cw.command(arguments...)
+
+	if len(cmd.Args) == 0 {
+		return errors.New("nothing to execute for an empty command")
+	}
+
+	log.Info(cw.logPrefix, "Starting cmd: ", cmd.Args[0], " with arguments: ", arguments)
 
 	// Attach logger for stdout and stderr
 	stdout, err := cmd.StdoutPipe()

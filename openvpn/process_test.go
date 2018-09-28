@@ -18,6 +18,7 @@
 package openvpn
 
 import (
+	"os/exec"
 	"testing"
 	"time"
 
@@ -27,8 +28,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestHelperProcess_Openvpn IS ESENTIAL FOR CMD MOCKING - DO NOT DELETE
+func TestHelperProcess_Openvpn(t *testing.T) {
+	RunTestExecOpenvpn()
+}
+
 func TestOpenvpnProcessStartsAndStopsSuccessfully(t *testing.T) {
-	process := newProcess("testdata/openvpn-mock-client.sh", &tunnel.NoopSetup{}, &config.GenericConfig{})
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess_Openvpn")
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	execTestHelper.AddExecResult("", "", 0, 0, "openvpn")
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
 
 	err := process.Start()
 	assert.NoError(t, err)
@@ -42,7 +53,12 @@ func TestOpenvpnProcessStartsAndStopsSuccessfully(t *testing.T) {
 }
 
 func TestOpenvpnProcessStartReportsErrorIfCmdWrapperDiesTooEarly(t *testing.T) {
-	process := newProcess("testdata/failing-openvpn-mock-client.sh", &tunnel.NoopSetup{}, &config.GenericConfig{})
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess")
+	execTestHelper.AddExecResult("", "", 1, 0, "openvpn")
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
 
 	err := process.Start()
 	assert.Error(t, err)
