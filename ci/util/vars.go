@@ -15,28 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package core
+package util
 
-import (
-	"github.com/urfave/cli"
-)
-
-var (
-	binaryFlag = cli.StringFlag{
-		Name:  "openvpn.binary",
-		Usage: "openvpn binary to use for Open VPN connections",
-		Value: "openvpn",
-	}
-)
-
-// RegisterFlags function register Openvpn flags to flag list
-func RegisterFlags(flags *[]cli.Flag) {
-	*flags = append(*flags, binaryFlag)
-}
-
-// ParseFlags function fills in Openvpn options from CLI context
-func ParseFlags(ctx *cli.Context) NodeOptions {
-	return NodeOptions{
-		ctx.GlobalString(binaryFlag.Name),
-	}
-}
+// MagePathOverrideEnvVar is the variable we use for path related overrides
+const MagePathOverrideEnvVar = "MAGEFILE_PATH_OVERRIDE"

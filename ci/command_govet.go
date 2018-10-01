@@ -1,3 +1,5 @@
+// +build mage
+
 /*
  * Copyright (C) 2018 The "MysteriumNetwork/go-openvpn" Authors.
  *
@@ -15,28 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package core
+package main
 
 import (
-	"github.com/urfave/cli"
+	"fmt"
+	"os"
+
+	"github.com/magefile/mage/sh"
+	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
-var (
-	binaryFlag = cli.StringFlag{
-		Name:  "openvpn.binary",
-		Usage: "openvpn binary to use for Open VPN connections",
-		Value: "openvpn",
+// Checks that the source is compliant with go vet
+func GoVet() error {
+	path := os.Getenv(util.MagePathOverrideEnvVar)
+	if path == "" {
+		path = "../..."
 	}
-)
-
-// RegisterFlags function register Openvpn flags to flag list
-func RegisterFlags(flags *[]cli.Flag) {
-	*flags = append(*flags, binaryFlag)
-}
-
-// ParseFlags function fills in Openvpn options from CLI context
-func ParseFlags(ctx *cli.Context) NodeOptions {
-	return NodeOptions{
-		ctx.GlobalString(binaryFlag.Name),
+	out, err := sh.Output("go", "vet", "-composites=false", path)
+	fmt.Print(out)
+	if err != nil {
+		return err
 	}
+	fmt.Println("All files are compliant with go vet")
+	return nil
 }

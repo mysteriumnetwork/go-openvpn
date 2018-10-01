@@ -29,6 +29,18 @@ jobs:
     - stage: test
       script: scripts/xgo_run.sh make test
       name: "Unit tests"
+    
+    - script: scripts/xgo_run.sh make govet
+      name: "Vet check" 
+
+    - script: make golint
+      name: "Golint check" 
+    
+    - script: make copyright
+      name: "Copyright check"
+
+    - script: make goimports
+      name: "Goimports check" 
 
     # Build artifacts
     - stage: build
@@ -41,6 +53,9 @@ jobs:
       - go get github.com/mysteriumnetwork/xgo
       - ./check-all.sh $PWD/examples/ios
       name: "Build example (iOS)"
+
+    - script: make goreport
+      name: "Update goreport"
 
     # Official release (on tags only)
     - stage: release

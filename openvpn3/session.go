@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2018 The "MysteriumNetwork/go-openvpn" Authors.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package openvpn3
 
 /*
@@ -29,6 +46,7 @@ import (
 	"unsafe"
 )
 
+// Session represents the openvpn session
 type Session struct {
 	finished    *sync.WaitGroup
 	resError    error
@@ -37,6 +55,7 @@ type Session struct {
 	sessionPtr  unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
+// NewSession creates a new session given the callbacks
 func NewSession(callbacks interface{}) *Session {
 	return &Session{
 		callbacks:   callbacks,
@@ -46,12 +65,14 @@ func NewSession(callbacks interface{}) *Session {
 	}
 }
 
+// MobileSessionCallbacks are the callbacks required for a mobile session
 type MobileSessionCallbacks interface {
 	EventConsumer
 	Logger
 	StatsConsumer
 }
 
+// NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
 func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
 		callbacks:   callbacks,
@@ -61,11 +82,15 @@ func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *S
 	}
 }
 
+// ErrInitFailed is the error we return when openvpn3 initiation fails
 var ErrInitFailed = errors.New("openvpn3 init failed")
+
+// ErrConnectFailed is the error we return when openvpn3 fails to connect
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 type expCredentials C.user_credentials
 
+// Start starts the session
 func (session *Session) Start(profile string, creds Credentials) {
 	session.finished.Add(1)
 	go func() {
@@ -113,11 +138,13 @@ func (session *Session) Start(profile string, creds Credentials) {
 	}()
 }
 
+// Wait waits for the session to complete
 func (session *Session) Wait() error {
 	session.finished.Wait()
 	return session.resError
 }
 
+// Stop stops the session
 func (session *Session) Stop() {
 	C.stop_session(session.sessionPtr)
 }

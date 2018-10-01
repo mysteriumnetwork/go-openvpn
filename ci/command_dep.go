@@ -1,21 +1,39 @@
 // +build mage
 
+/*
+ * Copyright (C) 2018 The "MysteriumNetwork/go-openvpn" Authors.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package main
 
 import (
 	"fmt"
 
 	"github.com/magefile/mage/sh"
+	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
-// Installs the package mangement tool - dep
+// Installs the package management tool - dep
 func Dep() error {
-	err := sh.Run("which", "dep")
-	if err == nil {
+	path, _ := util.GetGoBinaryPath("dep")
+	if path != "" {
 		fmt.Println("Tool 'dep' already installed")
 		return nil
 	}
-	err = sh.RunV("go", "get", "github.com/golang/dep/cmd/dep")
+	err := sh.RunV("go", "get", "github.com/golang/dep/cmd/dep")
 	if err != nil {
 		fmt.Println("Could not go get dep")
 		return err

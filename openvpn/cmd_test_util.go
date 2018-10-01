@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The "MysteriumNetwork/node" Authors.
+ * Copyright (C) 2018 The "MysteriumNetwork/go-openvpn" Authors.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ const execTestStdErrorKey = "EXEC_HELPER_STDERR"
 const execTestDelayKey = "EXEC_HELPER_DELAY_MILISECONDS"
 const execTestArgsKey = "EXEC_HELPER_ARGS"
 
+// ExecCmdTestResult represents the mocked cmd exec result
 type ExecCmdTestResult struct {
 	command  string
 	exitCode int
