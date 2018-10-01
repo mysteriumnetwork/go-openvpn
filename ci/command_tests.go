@@ -20,12 +20,19 @@
 package main
 
 import (
+	"os"
+
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
+	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
 // Runs the test suite against the repo
 func Test() error {
 	mg.Deps(Deps)
-	return sh.RunV("go", "test", "-race", "-cover", "../...")
+	path := os.Getenv(util.MagePathOverrideEnvVar)
+	if path == "" {
+		path = "../..."
+	}
+	return sh.RunV("go", "test", "-race", "-cover", path)
 }

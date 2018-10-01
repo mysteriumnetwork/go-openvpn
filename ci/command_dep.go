@@ -26,7 +26,7 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
-// Installs the package mangement tool - dep
+// Installs the package management tool - dep
 func Dep() error {
 	path, _ := util.GetGoBinaryPath("dep")
 	if path != "" {

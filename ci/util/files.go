@@ -23,11 +23,12 @@ import (
 	"strings"
 )
 
-var excludedDirs = []string{".git", "vendor"}
+// CommonlyExcludedRepoDirs contains the list of directories that are commonly excluded
+var CommonlyExcludedRepoDirs = []string{".git", "vendor", "build"}
 
 // IsPathExcluded determines if the provided path is excluded from common searches
 func IsPathExcluded(path string) bool {
-	for _, exclude := range excludedDirs {
+	for _, exclude := range CommonlyExcludedRepoDirs {
 		if strings.Contains(path, "/"+exclude) {
 			return true
 		}

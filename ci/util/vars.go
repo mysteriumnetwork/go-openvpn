@@ -1,5 +1,3 @@
-// +build mage
-
 /*
  * Copyright (C) 2018 The "MysteriumNetwork/go-openvpn" Authors.
  *
@@ -17,27 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package main
+package util
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/magefile/mage/sh"
-	"github.com/mysteriumnetwork/go-openvpn/ci/util"
-)
-
-// Checks that the source is compliant with go vet
-func GoVet() error {
-	path := os.Getenv(util.MagePathOverrideEnvVar)
-	if path == "" {
-		path = "../..."
-	}
-	out, err := sh.Output("go", "vet", "-composites=false", path)
-	fmt.Print(out)
-	if err != nil {
-		return err
-	}
-	fmt.Println("All files are compliant with go vet")
-	return nil
-}
+// MagePathOverrideEnvVar is the variable we use for path related overrides
+const MagePathOverrideEnvVar = "MAGEFILE_PATH_OVERRIDE"

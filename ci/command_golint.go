@@ -56,7 +56,7 @@ func getPackageFromGoLintOutput(line string) string {
 	return ""
 }
 
-func beautiflyPrintGoLintOutput(rawGolint string) {
+func formatAndPrintGoLintOutput(rawGolint string) {
 	packageErrorMap := make(map[string][]string, 0)
 	separateLines := strings.Split(rawGolint, "\n")
 
@@ -89,14 +89,11 @@ func GoLint() error {
 		return err
 	}
 	var files []string
-	var excludedDirs = []string{".git", "vendor"}
 	err = filepath.Walk("../", func(path string, info os.FileInfo, err error) error {
+		if util.IsPathExcluded(path) {
+			return nil
+		}
 		if info.IsDir() {
-			for _, exclude := range excludedDirs {
-				if strings.Contains(path, "/"+exclude) {
-					return nil
-				}
-			}
 			files = append(files, path)
 		}
 		return nil
@@ -113,7 +110,7 @@ func GoLint() error {
 		return nil
 	}
 
-	beautiflyPrintGoLintOutput(output)
+	formatAndPrintGoLintOutput(output)
 	fmt.Println("Linting failed!")
 	return err
 }

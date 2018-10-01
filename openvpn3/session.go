@@ -72,7 +72,7 @@ type MobileSessionCallbacks interface {
 	StatsConsumer
 }
 
-// NewMobileSession creates a new mobile sesssion provided the required callbacks and tunnel setup
+// NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
 func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
 		callbacks:   callbacks,

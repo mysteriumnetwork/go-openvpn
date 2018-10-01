@@ -26,28 +26,29 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
+
+	"github.com/mysteriumnetwork/go-openvpn/ci/util"
 )
 
 var copyrightRegex = regexp.MustCompile(`Copyright \(C\) \d{4} The "MysteriumNetwork/go-openvpn"`)
 
 func getFilesWithoutCopyright() ([]string, error) {
 	badFiles := make([]string, 0)
-	var excludedDirs = []string{".git", "vendor"}
 	err := filepath.Walk("../", func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
+		if err != nil {
+			return err
 		}
-		for _, exclude := range excludedDirs {
-			if strings.Contains(path, "/"+exclude) {
-				return nil
-			}
+		if info.IsDir() || util.IsPathExcluded(path) {
+			return nil
 		}
 		extension := filepath.Ext(path)
 		if extension != ".go" {
 			return nil
 		}
 		contents, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
 		match := copyrightRegex.Match(contents)
 		if !match {
 			badFiles = append(badFiles, path)
