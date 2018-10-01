@@ -30,7 +30,7 @@ jobs:
       script: scripts/xgo_run.sh make test
       name: "Unit tests"
     
-    - script: make govet
+    - script: scripts/xgo_run.sh make govet
       name: "Vet check" 
 
     - script: make golint
