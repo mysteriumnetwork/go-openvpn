@@ -39,6 +39,7 @@ const execTestStdErrorKey = "EXEC_HELPER_STDERR"
 const execTestDelayKey = "EXEC_HELPER_DELAY_MILISECONDS"
 const execTestArgsKey = "EXEC_HELPER_ARGS"
 
+// ExecCmdTestResult represents the mocked cmd exec result
 type ExecCmdTestResult struct {
 	command  string
 	exitCode int

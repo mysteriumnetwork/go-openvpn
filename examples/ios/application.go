@@ -33,12 +33,15 @@ func (lc *loggingCallbacks) OnStats(stats openvpn3.Statistics) {
 
 var _ callbacks = &loggingCallbacks{}
 
+// StdoutLogger repesents the stdout logger callback
 type StdoutLogger func(text string)
 
+// Log logs the given string to stdout logger
 func (lc StdoutLogger) Log(text string) {
 	lc(text)
 }
 
+// StartSession starts the openvpn3 session for ios
 func StartSession() {
 
 	var logger StdoutLogger = func(text string) {

@@ -43,6 +43,7 @@ func goEventCallback(ptr C.user_callback_data, cEvent C.conn_event) {
 	callbacks.event(id, e)
 }
 
+// SelfCheck runs the openvpn self check
 func SelfCheck(logger Logger) {
 	id, callbackRemove := callbacks.register(logger)
 	defer callbackRemove()

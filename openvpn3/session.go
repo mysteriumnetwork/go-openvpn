@@ -29,6 +29,7 @@ import (
 	"unsafe"
 )
 
+// Session represents the openvpn session
 type Session struct {
 	finished    *sync.WaitGroup
 	resError    error
@@ -37,6 +38,7 @@ type Session struct {
 	sessionPtr  unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
+// NewSession creates a new session given the callbacks
 func NewSession(callbacks interface{}) *Session {
 	return &Session{
 		callbacks:   callbacks,
@@ -46,12 +48,14 @@ func NewSession(callbacks interface{}) *Session {
 	}
 }
 
+// MobileSessionCallbacks are the callbacks required for a mobile session
 type MobileSessionCallbacks interface {
 	EventConsumer
 	Logger
 	StatsConsumer
 }
 
+// NewMobileSession creates a new mobile sesssion provided the required callbacks and tunnel setup
 func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
 		callbacks:   callbacks,
@@ -61,11 +65,15 @@ func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *S
 	}
 }
 
+// ErrInitFailed is the error we return when openvpn3 initiation fails
 var ErrInitFailed = errors.New("openvpn3 init failed")
+
+// ErrConnectFailed is the error we return when openvpn3 fails to connect
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 type expCredentials C.user_credentials
 
+// Start starts the session
 func (session *Session) Start(profile string, creds Credentials) {
 	session.finished.Add(1)
 	go func() {
@@ -113,11 +121,13 @@ func (session *Session) Start(profile string, creds Credentials) {
 	}()
 }
 
+// Wait waits for the session to complete
 func (session *Session) Wait() error {
 	session.finished.Wait()
 	return session.resError
 }
 
+// Stop stops the session
 func (session *Session) Stop() {
 	C.stop_session(session.sessionPtr)
 }
