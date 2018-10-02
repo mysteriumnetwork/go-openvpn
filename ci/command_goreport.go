@@ -28,7 +28,7 @@ import (
 
 func updateReport() error {
 	url := "https://goreportcard.com/checks"
-	payload := strings.NewReader("repo=github.com%2Fmysteriumnetwork%2Fnode")
+	payload := strings.NewReader("repo=github.com%2Fmysteriumnetwork%2Fgo-openvpn")
 	req, _ := http.NewRequest("POST", url, payload)
 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
 	client := http.Client{
