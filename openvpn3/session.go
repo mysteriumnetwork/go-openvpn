@@ -47,9 +47,10 @@ import (
 
 // Session represents the openvpn session
 type Session struct {
-	config      Config
-	callbacks   interface{}
-	tunnelSetup TunnelSetup
+	config          Config
+	userCredentials Credentials
+	callbacks       interface{}
+	tunnelSetup     TunnelSetup
 
 	// runtime variables
 	finished   *sync.WaitGroup
@@ -58,13 +59,14 @@ type Session struct {
 }
 
 // NewSession creates a new session given the callbacks
-func NewSession(config Config, callbacks interface{}) *Session {
+func NewSession(config Config, userCredentials Credentials, callbacks interface{}) *Session {
 	return &Session{
-		config:      config,
-		callbacks:   callbacks,
-		tunnelSetup: &NoOpTunnelSetup{},
-		resError:    nil,
-		finished:    &sync.WaitGroup{},
+		config:          config,
+		userCredentials: userCredentials,
+		callbacks:       callbacks,
+		tunnelSetup:     &NoOpTunnelSetup{},
+		resError:        nil,
+		finished:        &sync.WaitGroup{},
 	}
 }
 
@@ -76,13 +78,14 @@ type MobileSessionCallbacks interface {
 }
 
 // NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
-func NewMobileSession(config Config, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
+func NewMobileSession(config Config, userCredentials Credentials, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
-		config:      config,
-		callbacks:   callbacks,
-		tunnelSetup: tunSetup,
-		resError:    nil,
-		finished:    &sync.WaitGroup{},
+		config:          config,
+		userCredentials: userCredentials,
+		callbacks:       callbacks,
+		tunnelSetup:     tunSetup,
+		resError:        nil,
+		finished:        &sync.WaitGroup{},
 	}
 }
 
@@ -93,7 +96,7 @@ var ErrInitFailed = errors.New("openvpn3 init failed")
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 // Start starts the session
-func (session *Session) Start(creds Credentials) {
+func (session *Session) Start() {
 	session.finished.Add(1)
 	go func() {
 		defer session.finished.Done()
@@ -101,8 +104,8 @@ func (session *Session) Start(creds Credentials) {
 		cConfig, cConfigUnregister := session.config.toPtr()
 		defer cConfigUnregister()
 
-		cCreds, cCredsUnregister := creds.toPtr()
-		defer cCredsUnregister()
+		cCrediantials, cCrediantialsUnregister := session.userCredentials.toPtr()
+		defer cCrediantialsUnregister()
 
 		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
@@ -113,7 +116,7 @@ func (session *Session) Start(creds Credentials) {
 
 		sessionPtr, _ := C.new_session(
 			cConfig,
-			cCreds,
+			cCrediantials,
 			C.callbacks_delegate(callbacksDelegate),
 			C.tun_builder_callbacks(tunBuilderCallbacks),
 		)

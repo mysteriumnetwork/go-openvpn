@@ -78,15 +78,10 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-
 	config := openvpn3.NewConfig(string(bytes))
-	session := openvpn3.NewSession(config, &loggingCallbacks{})
 
-	creds := openvpn3.Credentials{
-		Username: "abc",
-		Password: "def",
-	}
-	session.Start(creds)
+	session := openvpn3.NewSession(config, openvpn3.Credentials{}, &loggingCallbacks{})
+	session.Start()
 	err = session.Wait()
 	if err != nil {
 		fmt.Println("Openvpn3 error: ", err)
