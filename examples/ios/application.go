@@ -69,14 +69,14 @@ func StartSession() {
 	}
 	openvpn3.SelfCheck(logger)
 
-	profile := ""
+	config := openvpn3.NewConfig("")
 	profileCreds := openvpn3.Credentials{
 		Username: "abc",
 		Password: "def",
 	}
 
-	session := openvpn3.NewMobileSession(&loggingCallbacks{}, &openvpn3.NoOpTunnelSetup{})
-	session.Start(profile, profileCreds)
+	session := openvpn3.NewMobileSession(config, &loggingCallbacks{}, &openvpn3.NoOpTunnelSetup{})
+	session.Start(profileCreds)
 
 	err := session.Wait()
 	if err != nil {

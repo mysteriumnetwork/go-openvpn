@@ -20,6 +20,20 @@ package openvpn3
 // #include <library.h>
 import "C"
 
+// NewConfig creates new Config from given profile key-value configuration string
+func NewConfig(profile string) Config {
+	return Config{
+		ProfileContent:    profile,
+		GuiVersion:        "cli 1.0",
+		Info:              true,
+		ClockTickMS:       1000, // ticks every 1 sec
+		DisableClientCert: true,
+		ConnTimeout:       10, // 10 seconds
+		TunPersist:        true,
+		CompressionMode:   "yes",
+	}
+}
+
 // Config holds all parameters to start session
 type Config struct {
 	ProfileContent    string

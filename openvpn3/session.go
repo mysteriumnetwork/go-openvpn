@@ -47,20 +47,24 @@ import (
 
 // Session represents the openvpn session
 type Session struct {
-	finished    *sync.WaitGroup
-	resError    error
+	config      Config
 	callbacks   interface{}
 	tunnelSetup TunnelSetup
-	sessionPtr  unsafe.Pointer //handle to created sessionPtr after Start method is called
+
+	// runtime variables
+	finished   *sync.WaitGroup
+	resError   error
+	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
 // NewSession creates a new session given the callbacks
-func NewSession(callbacks interface{}) *Session {
+func NewSession(config Config, callbacks interface{}) *Session {
 	return &Session{
+		config:      config,
 		callbacks:   callbacks,
+		tunnelSetup: &NoOpTunnelSetup{},
 		resError:    nil,
 		finished:    &sync.WaitGroup{},
-		tunnelSetup: &NoOpTunnelSetup{},
 	}
 }
 
@@ -72,12 +76,13 @@ type MobileSessionCallbacks interface {
 }
 
 // NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
-func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
+func NewMobileSession(config Config, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
+		config:      config,
 		callbacks:   callbacks,
+		tunnelSetup: tunSetup,
 		resError:    nil,
 		finished:    &sync.WaitGroup{},
-		tunnelSetup: tunSetup,
 	}
 }
 
@@ -88,22 +93,12 @@ var ErrInitFailed = errors.New("openvpn3 init failed")
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 // Start starts the session
-func (session *Session) Start(profile string, creds Credentials) {
+func (session *Session) Start(creds Credentials) {
 	session.finished.Add(1)
 	go func() {
 		defer session.finished.Done()
 
-		config := Config{
-			ProfileContent:    profile,
-			GuiVersion:        "cli 1.0",
-			Info:              true,
-			ClockTickMS:       1000, // ticks every 1 sec
-			DisableClientCert: true,
-			ConnTimeout:       10, // 10 seconds
-			TunPersist:        true,
-			CompressionMode:   "yes",
-		}
-		cConfig, cConfigUnregister := config.toPtr()
+		cConfig, cConfigUnregister := session.config.toPtr()
 		defer cConfigUnregister()
 
 		cCreds, cCredsUnregister := creds.toPtr()
