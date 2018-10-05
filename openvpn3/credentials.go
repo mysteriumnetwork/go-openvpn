@@ -20,13 +20,13 @@ package openvpn3
 // #include <library.h>
 import "C"
 
-// Credentials represents the credentials structure
-type Credentials struct {
+// UserCredentials represents the credentials structure
+type UserCredentials struct {
 	Username string
 	Password string
 }
 
-func (credentials *Credentials) toPtr() (cCredentials C.user_credentials, unregister func()) {
+func (credentials *UserCredentials) toPtr() (cCredentials C.user_credentials, unregister func()) {
 	cUsername := newCharPointer(credentials.Username)
 	cPassword := newCharPointer(credentials.Password)
 

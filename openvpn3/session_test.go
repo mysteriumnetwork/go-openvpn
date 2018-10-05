@@ -26,14 +26,14 @@ import (
 )
 
 func TestSessionInitFailsForInvalidProfile(t *testing.T) {
-	session := NewSession(Config{}, Credentials{}, &fmtLogger{})
+	session := NewSession(Config{}, UserCredentials{}, &fmtLogger{})
 	session.Start()
 	err := session.Wait()
 	assert.Equal(t, ErrInitFailed, err)
 }
 
 func TestSessionConnectFailsForInvalidRemote(t *testing.T) {
-	session := NewSession(NewConfig("remote localhost 1111"), Credentials{}, &fmtLogger{})
+	session := NewSession(NewConfig("remote localhost 1111"), UserCredentials{}, &fmtLogger{})
 	session.Start()
 	err := session.Wait()
 	assert.Equal(t, ErrConnectFailed, err)

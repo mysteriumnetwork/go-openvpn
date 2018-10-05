@@ -71,7 +71,7 @@ func StartSession() {
 
 	session := openvpn3.NewMobileSession(
 		openvpn3.NewConfig(""),
-		openvpn3.Credentials{},
+		openvpn3.UserCredentials{},
 		&loggingCallbacks{},
 		&openvpn3.NoOpTunnelSetup{},
 	)

@@ -80,7 +80,7 @@ func main() {
 	}
 	config := openvpn3.NewConfig(string(bytes))
 
-	session := openvpn3.NewSession(config, openvpn3.Credentials{}, &loggingCallbacks{})
+	session := openvpn3.NewSession(config, openvpn3.UserCredentials{}, &loggingCallbacks{})
 	session.Start()
 	err = session.Wait()
 	if err != nil {

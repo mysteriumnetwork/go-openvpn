@@ -48,7 +48,7 @@ import (
 // Session represents the openvpn session
 type Session struct {
 	config          Config
-	userCredentials Credentials
+	userCredentials UserCredentials
 	callbacks       interface{}
 	tunnelSetup     TunnelSetup
 
@@ -59,7 +59,7 @@ type Session struct {
 }
 
 // NewSession creates a new session given the callbacks
-func NewSession(config Config, userCredentials Credentials, callbacks interface{}) *Session {
+func NewSession(config Config, userCredentials UserCredentials, callbacks interface{}) *Session {
 	return &Session{
 		config:          config,
 		userCredentials: userCredentials,
@@ -78,7 +78,7 @@ type MobileSessionCallbacks interface {
 }
 
 // NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
-func NewMobileSession(config Config, userCredentials Credentials, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
+func NewMobileSession(config Config, userCredentials UserCredentials, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
 		config:          config,
 		userCredentials: userCredentials,
@@ -104,8 +104,8 @@ func (session *Session) Start() {
 		cConfig, cConfigUnregister := session.config.toPtr()
 		defer cConfigUnregister()
 
-		cCrediantials, cCrediantialsUnregister := session.userCredentials.toPtr()
-		defer cCrediantialsUnregister()
+		cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
+		defer cCredentialsUnregister()
 
 		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
@@ -116,7 +116,7 @@ func (session *Session) Start() {
 
 		sessionPtr, _ := C.new_session(
 			cConfig,
-			cCrediantials,
+			cCredentials,
 			C.callbacks_delegate(callbacksDelegate),
 			C.tun_builder_callbacks(tunBuilderCallbacks),
 		)
