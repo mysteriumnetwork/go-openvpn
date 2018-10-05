@@ -61,7 +61,10 @@ func (lc StdoutLogger) Log(text string) {
 }
 
 func main() {
-
+	if len(os.Args) < 2 {
+		fmt.Println("Missing profile file")
+		os.Exit(1)
+	}
 	profileName := os.Args[1]
 
 	var logger StdoutLogger = func(text string) {
