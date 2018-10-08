@@ -36,7 +36,6 @@ package openvpn3
 #cgo windows LDFLAGS: -lws2_32 -liphlpapi
 
 #include <library.h>
-#include <tunsetup.h>
 
 */
 import "C"
@@ -48,20 +47,26 @@ import (
 
 // Session represents the openvpn session
 type Session struct {
-	finished    *sync.WaitGroup
-	resError    error
-	callbacks   interface{}
-	tunnelSetup TunnelSetup
-	sessionPtr  unsafe.Pointer //handle to created sessionPtr after Start method is called
+	config          Config
+	userCredentials UserCredentials
+	callbacks       interface{}
+	tunnelSetup     TunnelSetup
+
+	// runtime variables
+	finished   *sync.WaitGroup
+	resError   error
+	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
 }
 
 // NewSession creates a new session given the callbacks
-func NewSession(callbacks interface{}) *Session {
+func NewSession(config Config, userCredentials UserCredentials, callbacks interface{}) *Session {
 	return &Session{
-		callbacks:   callbacks,
-		resError:    nil,
-		finished:    &sync.WaitGroup{},
-		tunnelSetup: &NoOpTunnelSetup{},
+		config:          config,
+		userCredentials: userCredentials,
+		callbacks:       callbacks,
+		tunnelSetup:     &NoOpTunnelSetup{},
+		resError:        nil,
+		finished:        &sync.WaitGroup{},
 	}
 }
 
@@ -73,12 +78,14 @@ type MobileSessionCallbacks interface {
 }
 
 // NewMobileSession creates a new mobile session provided the required callbacks and tunnel setup
-func NewMobileSession(callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
+func NewMobileSession(config Config, userCredentials UserCredentials, callbacks MobileSessionCallbacks, tunSetup TunnelSetup) *Session {
 	return &Session{
-		callbacks:   callbacks,
-		resError:    nil,
-		finished:    &sync.WaitGroup{},
-		tunnelSetup: tunSetup,
+		config:          config,
+		userCredentials: userCredentials,
+		callbacks:       callbacks,
+		tunnelSetup:     tunSetup,
+		resError:        nil,
+		finished:        &sync.WaitGroup{},
 	}
 }
 
@@ -88,37 +95,28 @@ var ErrInitFailed = errors.New("openvpn3 init failed")
 // ErrConnectFailed is the error we return when openvpn3 fails to connect
 var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
-type expCredentials C.user_credentials
-
 // Start starts the session
-func (session *Session) Start(profile string, creds Credentials) {
+func (session *Session) Start() {
 	session.finished.Add(1)
 	go func() {
 		defer session.finished.Done()
 
-		profileContent := newCharPointer(profile)
-		defer profileContent.delete()
+		cConfig, cConfigUnregister := session.config.toPtr()
+		defer cConfigUnregister()
 
-		cUsername := newCharPointer(creds.Username)
-		defer cUsername.delete()
-
-		cPassword := newCharPointer(creds.Password)
-		defer cPassword.delete()
-
-		cCreds := expCredentials{
-			username: cUsername.Ptr,
-			password: cPassword.Ptr,
-		}
+		cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
+		defer cCredentialsUnregister()
 
 		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
 
 		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(&NoOpTunnelSetup{})
 		defer removeTunCallbacks()
+		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
-			profileContent.Ptr,
-			C.user_credentials(cCreds),
+			cConfig,
+			cCredentials,
 			C.callbacks_delegate(callbacksDelegate),
 			C.tun_builder_callbacks(tunBuilderCallbacks),
 		)

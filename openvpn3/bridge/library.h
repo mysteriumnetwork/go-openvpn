@@ -35,6 +35,16 @@ typedef struct {
     event_callback eventCallback;
 } callbacks_delegate;
 
+typedef struct {
+    const char *profileContent;
+    const char *guiVersion;
+    bool info; // turn on verbose logs
+    int clockTickMS; // e.g. 1000 ticks every 1 sec
+    bool disableClientCert; // we don't use certs for client identification
+    int connTimeout; // connection timeout spend on connect and reconnect overal time
+    bool tunPersist;
+    const char *compressionMode;
+} config;
 
 typedef struct {
     const char * username;
@@ -42,7 +52,7 @@ typedef struct {
 } user_credentials;
 
 //creates new session - nil on error,
-void *new_session(const char * profile_content, user_credentials, callbacks_delegate , tun_builder_callbacks);
+void *new_session(config, user_credentials, callbacks_delegate , tun_builder_callbacks);
 
 //starts created session
 int start_session(void *ptr);

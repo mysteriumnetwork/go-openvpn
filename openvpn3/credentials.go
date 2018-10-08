@@ -17,8 +17,26 @@
 
 package openvpn3
 
-// Credentials represents the credentials structure
-type Credentials struct {
+// #include <library.h>
+import "C"
+
+// UserCredentials represents the credentials structure
+type UserCredentials struct {
 	Username string
 	Password string
+}
+
+func (credentials *UserCredentials) toPtr() (cCredentials C.user_credentials, unregister func()) {
+	cUsername := newCharPointer(credentials.Username)
+	cPassword := newCharPointer(credentials.Password)
+
+	cCredentials = C.user_credentials{
+		username: cUsername.Ptr,
+		password: cPassword.Ptr,
+	}
+	unregister = func() {
+		cUsername.delete()
+		cPassword.delete()
+	}
+	return
 }

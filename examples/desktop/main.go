@@ -61,7 +61,10 @@ func (lc StdoutLogger) Log(text string) {
 }
 
 func main() {
-
+	if len(os.Args) < 2 {
+		fmt.Println("Missing profile file")
+		os.Exit(1)
+	}
 	profileName := os.Args[1]
 
 	var logger StdoutLogger = func(text string) {
@@ -73,20 +76,15 @@ func main() {
 
 	openvpn3.SelfCheck(logger)
 
-	session := openvpn3.NewSession(&loggingCallbacks{})
-
 	bytes, err := ioutil.ReadFile(profileName)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+	config := openvpn3.NewConfig(string(bytes))
 
-	creds := openvpn3.Credentials{
-		Username: "abc",
-		Password: "def",
-	}
-
-	session.Start(string(bytes), creds)
+	session := openvpn3.NewSession(config, openvpn3.UserCredentials{}, &loggingCallbacks{})
+	session.Start()
 	err = session.Wait()
 	if err != nil {
 		fmt.Println("Openvpn3 error: ", err)
