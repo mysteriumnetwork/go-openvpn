@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 set -e
 
-xgo -x -v --image=mysteriumnetwork/xgo:1.11 --targets=linux/amd64,darwin/amd64,windows/amd64,ios-10.3/arm64,android-21/arm64 --out=build/test $@
+./xgo-check.sh --targets=linux/amd64,darwin/amd64,windows/amd64 --out=build/desktop $GOPATH/src/github.com/mysteriumnetwork/go-openvpn/examples/desktop
+./xgo-check.sh --targets=ios/*,android/* --out=build/mobile $GOPATH/src/github.com/mysteriumnetwork/go-openvpn/examples/mobile

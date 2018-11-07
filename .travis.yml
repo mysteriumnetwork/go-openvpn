@@ -10,13 +10,6 @@ cache:
 stages:
   - dep-cache
   - test
-  - name: build
-    if: (type != pull_request AND branch = master AND tag IS blank) OR tag IS present
-  - name: release
-    # we are not ready for deployment yet - gomobile depends on xcode, and we didn't test it yet on xgo image
-    #if: tag IS present
-    if: type = never
-
 
 jobs:
   include:
@@ -42,36 +35,13 @@ jobs:
     - script: make goimports
       name: "Goimports check" 
 
-    # Build artifacts
-    - stage: build
-      script:
-      - go get github.com/mysteriumnetwork/xgo
-      - ./check-all.sh $PWD/examples/desktop
-      name: "Build example (Desktop)"
-
     - script:
       - go get github.com/mysteriumnetwork/xgo
-      - ./check-all.sh $PWD/examples/ios
-      name: "Build example (iOS)"
+      - ./check-all.sh
+      name: "Binaries check"
 
     - script: make goreport
       name: "Update goreport"
-
-    # Official release (on tags only)
-    - stage: release
-      script:
-      - go get golang.org/x/mobile/cmd/gomobile
-      - mkdir -p tmp artifacts
-      - ./gomobile_ios.sh -o tmp/Openvpn3.framework
-      - tar -zcvf artifacts/Openvpn3.framework.tar.gz tmp/Openvpn3.framework
-      name: "Official release (on tags only)"
-      deploy:
-        provider: releases
-        file_glob: true
-        file: artifacts/*
-        skip_cleanup: true
-        api_key: "$GIT_RELEASES_API_KEY"
-
 
 notifications:
   slack:
