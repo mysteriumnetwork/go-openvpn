@@ -3,13 +3,13 @@ set -e
 
 PLATFORM=android
 SCRIPTS=android
-LIBSUFFIX=android_arm64
+LIBSUFFIX=android_x86
 
 echo "Building for: $PLATFORM"
 
 echo "Bootstrapping Android NDK"
 
-$ANDROID_NDK_ROOT/build/tools/make-standalone-toolchain.sh --ndk-dir=$ANDROID_NDK_ROOT --install-dir=/usr/$ANDROID_CHAIN_ARM64 --toolchain=$ANDROID_CHAIN_ARM64 --arch=arm64 > /dev/null 2>&1
+$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_386 --api=16 --arch=x86
 
 
 echo BUILD DEPS
@@ -18,13 +18,13 @@ rm -rf asio* lz4* mbedtls* #lzo* boost* minicrypto openssl* polarssl* snappy*
 echo "******* ASIO"
 $O3/core/deps/asio/build-asio
 echo "******* MBEDTLS"
-TARGETS=android-a8a $O3/core/scripts/android/build-mbedtls
+TARGETS=android-x86 $O3/core/scripts/android/build-mbedtls
 echo "******* LZ4"
-TARGETS=android-a8a $O3/core/scripts/android/build-lz4
+TARGETS=android-x86 $O3/core/scripts/android/build-lz4
 popd
 
 . core/vars/setpath
-. core/vars/vars-android-a8a
+. core/vars/vars-android-x86
 
 cd core/adapter
 PROF=$PLATFORM MTLS=1 NOSSL=1 LZ4=1 ASIO=1 ECHO=1 CO=1 build library
