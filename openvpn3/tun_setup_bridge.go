@@ -84,6 +84,8 @@ extern void  goEstablishLite(user_callback_data);
 
 extern void  goTeardown(user_callback_data , bool disconnect);
 
+extern bool goSocketProtect(user_callback_data, int socket);
+
 */
 import "C"
 import "sync"
@@ -272,6 +274,13 @@ func goTeardown(cd C.user_callback_data, disconnect C.bool) {
 	delegate.Teardown(bool(disconnect))
 }
 
+//export goSocketProtect
+func goSocketProtect(cd C.user_callback_data, socket C.int) C.bool {
+	id := int(cd)
+	delegate := tunnelSetupRegistry.lookup(id)
+	return C.bool(delegate.SocketProtect(int(socket)))
+}
+
 var tunnelSetupRegistry = tunSetupRegistry{
 	lock:   &sync.Mutex{},
 	idMap:  make(map[int]TunnelSetup),
@@ -306,5 +315,6 @@ func registerTunnelSetupDelegate(delegate TunnelSetup) (C.tun_builder_callbacks,
 		persist:                   C.tun_builder_persist(C.goPersist),
 		establish_lite:            C.tun_builder_establish_lite(C.goEstablishLite),
 		teardown:                  C.tun_builder_teardown(C.goTeardown),
+		socket_protect:            C.tun_socket_protect(C.goSocketProtect),
 	}, unregister
 }

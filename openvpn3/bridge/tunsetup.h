@@ -80,6 +80,8 @@ typedef void(*tun_builder_establish_lite)(user_callback_data);
 
 typedef void(*tun_builder_teardown)(user_callback_data , bool disconnect);
 
+typedef bool(*tun_socket_protect)(user_callback_data, int socket);
+
 typedef struct {
     tun_builder_new new_builder;
     tun_builder_set_layer set_layer;
@@ -104,6 +106,7 @@ typedef struct {
     tun_builder_persist persist;
     tun_builder_establish_lite establish_lite;
     tun_builder_teardown teardown;
+    tun_socket_protect socket_protect;
     user_callback_data usrData;
 } tun_builder_callbacks;
 

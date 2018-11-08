@@ -44,6 +44,7 @@ type TunnelSetup interface {
 	Persist() bool
 	EstablishLite()
 	Teardown(disconnect bool)
+	SocketProtect(socket int) bool
 }
 
 //NoOpTunnelSetup by default returns false everywhere - to indicate that it is not supposed to be called and actual
@@ -164,6 +165,11 @@ func (setup *NoOpTunnelSetup) EstablishLite() {
 // Teardown - noop - does nothing
 func (setup *NoOpTunnelSetup) Teardown(disconnect bool) {
 
+}
+
+// SocketProtect - noop - does nothing
+func (setup *NoOpTunnelSetup) SocketProtect(socket int) bool {
+	return false
 }
 
 var _ TunnelSetup = &NoOpTunnelSetup{}
