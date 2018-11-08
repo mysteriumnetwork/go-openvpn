@@ -112,7 +112,7 @@ func (session *Session) Start() {
 		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
 
-		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(&NoOpTunnelSetup{})
+		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
 		defer removeTunCallbacks()
 		defer removeTunCallbacks()
 
