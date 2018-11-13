@@ -1,5 +1,4 @@
-sudo: true #for docker service to be enabled
-os: linux
+dist: xenial
 language: go
 go: ["1.11"]
 cache:
@@ -20,20 +19,20 @@ jobs:
 
     # Test stage
     - stage: test
-      script: scripts/xgo_run.sh make test
+      script: make test
       name: "Unit tests"
-    
-    - script: scripts/xgo_run.sh make govet
-      name: "Vet check" 
+
+    - script: make govet
+      name: "Vet check"
 
     - script: make golint
-      name: "Golint check" 
-    
+      name: "Golint check"
+
     - script: make copyright
       name: "Copyright check"
 
     - script: make goimports
-      name: "Goimports check" 
+      name: "Goimports check"
 
     - script:
       - go get github.com/mysteriumnetwork/xgo
