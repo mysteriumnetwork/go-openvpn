@@ -31,6 +31,7 @@ package openvpn3
 #cgo android,arm64 LDFLAGS: -lopenvpn3_android_arm64
 #cgo android,amd64 LDFLAGS: -lopenvpn3_android_amd64
 #cgo android,386 LDFLAGS: -lopenvpn3_android_x86
+#cgo android,arm LDFLAGS: -lopenvpn3_android_armeabi-v7a
 //TODO copied from openvpnv3 lib build tool - do we really need all of this?
 #cgo darwin,amd64 LDFLAGS: -framework Security -framework CoreFoundation -framework SystemConfiguration -framework IOKit -framework ApplicationServices -mmacosx-version-min=10.8 -stdlib=libc++
 //iOS frameworks
