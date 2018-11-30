@@ -34,6 +34,11 @@ go run examples/desktop/main.go examples/profile.ovpn
 ./gomobile_example_ios.sh
 ```
 
+## Building bridge libraries
+```bash
+scripts/xgo_run.sh scripts/build-bridge.sh
+```
+
 ## Run tests
 ```
 make test
