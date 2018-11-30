@@ -60,6 +60,8 @@ int start_session(void *ptr);
 void stop_session(void *ptr);
 //cleanups session
 void cleanup_session(void *ptr);
+//reconnect session
+void reconnect_session(void *ptr, int seconds);
 
 void check_library(user_callback_data userData, log_callback);
 

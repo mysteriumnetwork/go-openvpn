@@ -149,3 +149,12 @@ func (session *Session) Wait() error {
 func (session *Session) Stop() {
 	C.stop_session(session.sessionPtr)
 }
+
+// Reconnect session without propagating DISCONNECT event after `seconds` time
+func (session *Session) Reconnect(seconds int) error {
+	if session.sessionPtr == nil {
+		return errors.New("session pointer is nil")
+	}
+	C.reconnect_session(session.sessionPtr, C.int(seconds))
+	return nil
+}
