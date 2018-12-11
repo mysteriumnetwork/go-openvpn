@@ -160,9 +160,9 @@ func (m *middleware) handleClientEvent(event clientEvent) {
 	case established:
 		log.Info("Client with ID: ", event.clientID, " connection established successfully")
 	case disconnect:
-		username := event.env["username"]
-		m.sessionCleaner(username)
 		log.Info("Client with ID: ", event.clientID, " disconnected")
+		// NOTE: do not cleanup session after disconnect event risen by transport itself
+		//  cleanup session only by user's intent
 	}
 }
 
