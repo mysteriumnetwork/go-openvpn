@@ -54,11 +54,14 @@ type Session struct {
 	userCredentials UserCredentials
 	callbacks       interface{}
 	tunnelSetup     TunnelSetup
+	mutex           sync.Mutex
+	initErrorChan   chan error
 
 	// runtime variables
 	finished   *sync.WaitGroup
 	resError   error
 	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
+	started    bool
 }
 
 // NewSession creates a new session given the callbacks
@@ -70,6 +73,7 @@ func NewSession(config Config, userCredentials UserCredentials, callbacks interf
 		tunnelSetup:     &NoOpTunnelSetup{},
 		resError:        nil,
 		finished:        &sync.WaitGroup{},
+		initErrorChan:   make(chan error, 1),
 	}
 }
 
@@ -89,6 +93,7 @@ func NewMobileSession(config Config, userCredentials UserCredentials, callbacks 
 		tunnelSetup:     tunSetup,
 		resError:        nil,
 		finished:        &sync.WaitGroup{},
+		initErrorChan:   make(chan error, 1),
 	}
 }
 
@@ -100,7 +105,15 @@ var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 // Start starts the session
 func (session *Session) Start() {
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	if session.started {
+		return
+	}
+
 	session.finished.Add(1)
+	session.started = true
 	go func() {
 		defer session.finished.Done()
 
@@ -115,7 +128,6 @@ func (session *Session) Start() {
 
 		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
 		defer removeTunCallbacks()
-		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
 			cConfig,
@@ -126,9 +138,12 @@ func (session *Session) Start() {
 
 		if sessionPtr == nil {
 			session.resError = ErrInitFailed
+			session.initErrorChan <- ErrInitFailed
 			return
 		}
+
 		session.sessionPtr = sessionPtr
+		session.initErrorChan <- nil
 
 		res, _ := C.start_session(sessionPtr)
 		if res != 0 {
@@ -147,14 +162,35 @@ func (session *Session) Wait() error {
 
 // Stop stops the session
 func (session *Session) Stop() {
-	C.stop_session(session.sessionPtr)
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	if !session.started {
+		return
+	}
+
+	// Block until the session init either fails or succeeds
+	err := <-session.initErrorChan
+
+	// A nil error here indicates that a session was started, so we'll want to stop it.
+	// A non nil error on the other hand means that the session was not created succesfully.
+	// In the case of a failure, there's no session to stop.
+	if err == nil {
+		C.stop_session(session.sessionPtr)
+	}
+
+	session.started = false
 }
 
 // Reconnect session without propagating DISCONNECT event after `seconds` time
 func (session *Session) Reconnect(seconds int) error {
-	if session.sessionPtr == nil {
-		return errors.New("session pointer is nil")
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	if !session.started {
+		return errors.New("session is not started")
 	}
+
 	C.reconnect_session(session.sessionPtr, C.int(seconds))
 	return nil
 }
