@@ -55,7 +55,6 @@ type Session struct {
 	callbacks       interface{}
 	tunnelSetup     TunnelSetup
 	mutex           sync.Mutex
-	initErrorChan   chan error
 
 	// runtime variables
 	finished   *sync.WaitGroup
@@ -73,7 +72,6 @@ func NewSession(config Config, userCredentials UserCredentials, callbacks interf
 		tunnelSetup:     &NoOpTunnelSetup{},
 		resError:        nil,
 		finished:        &sync.WaitGroup{},
-		initErrorChan:   make(chan error, 1),
 	}
 }
 
@@ -93,7 +91,6 @@ func NewMobileSession(config Config, userCredentials UserCredentials, callbacks 
 		tunnelSetup:     tunSetup,
 		resError:        nil,
 		finished:        &sync.WaitGroup{},
-		initErrorChan:   make(chan error, 1),
 	}
 }
 
@@ -112,38 +109,37 @@ func (session *Session) Start() {
 		return
 	}
 
-	session.finished.Add(1)
+	cConfig, cConfigUnregister := session.config.toPtr()
+	cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
+	callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
+	tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
+	sessionPtr, _ := C.new_session(
+		cConfig,
+		cCredentials,
+		C.callbacks_delegate(callbacksDelegate),
+		C.tun_builder_callbacks(tunBuilderCallbacks),
+	)
+
+	if sessionPtr == nil {
+		cConfigUnregister()
+		cCredentialsUnregister()
+		removeCallback()
+		removeTunCallbacks()
+
+		session.resError = ErrInitFailed
+		return
+	}
+
+	session.sessionPtr = sessionPtr
 	session.started = true
+	session.finished.Add(1)
+
 	go func() {
-		defer session.finished.Done()
-
-		cConfig, cConfigUnregister := session.config.toPtr()
 		defer cConfigUnregister()
-
-		cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
 		defer cCredentialsUnregister()
-
-		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
 		defer removeCallback()
-
-		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
 		defer removeTunCallbacks()
-
-		sessionPtr, _ := C.new_session(
-			cConfig,
-			cCredentials,
-			C.callbacks_delegate(callbacksDelegate),
-			C.tun_builder_callbacks(tunBuilderCallbacks),
-		)
-
-		if sessionPtr == nil {
-			session.resError = ErrInitFailed
-			session.initErrorChan <- ErrInitFailed
-			return
-		}
-
-		session.sessionPtr = sessionPtr
-		session.initErrorChan <- nil
+		defer session.finished.Done()
 
 		res, _ := C.start_session(sessionPtr)
 		if res != 0 {
@@ -169,15 +165,7 @@ func (session *Session) Stop() {
 		return
 	}
 
-	// Block until the session init either fails or succeeds
-	err := <-session.initErrorChan
-
-	// A nil error here indicates that a session was started, so we'll want to stop it.
-	// A non nil error on the other hand means that the session was not created succesfully.
-	// In the case of a failure, there's no session to stop.
-	if err == nil {
-		C.stop_session(session.sessionPtr)
-	}
+	C.stop_session(session.sessionPtr)
 
 	session.started = false
 }
