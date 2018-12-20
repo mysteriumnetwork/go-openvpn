@@ -45,7 +45,6 @@ import "C"
 import (
 	"errors"
 	"sync"
-	"unsafe"
 )
 
 // Session represents the openvpn session
@@ -54,11 +53,12 @@ type Session struct {
 	userCredentials UserCredentials
 	callbacks       interface{}
 	tunnelSetup     TunnelSetup
+	finished        sync.WaitGroup
+	stop            sync.WaitGroup
+	reconnectChan   chan int
 
 	// runtime variables
-	finished   *sync.WaitGroup
-	resError   error
-	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
+	resError error
 }
 
 // NewSession creates a new session given the callbacks
@@ -69,7 +69,7 @@ func NewSession(config Config, userCredentials UserCredentials, callbacks interf
 		callbacks:       callbacks,
 		tunnelSetup:     &NoOpTunnelSetup{},
 		resError:        nil,
-		finished:        &sync.WaitGroup{},
+		reconnectChan:   make(chan int, 1),
 	}
 }
 
@@ -88,7 +88,7 @@ func NewMobileSession(config Config, userCredentials UserCredentials, callbacks 
 		callbacks:       callbacks,
 		tunnelSetup:     tunSetup,
 		resError:        nil,
-		finished:        &sync.WaitGroup{},
+		reconnectChan:   make(chan int, 1),
 	}
 }
 
@@ -101,9 +101,9 @@ var ErrConnectFailed = errors.New("openvpn3 connect failed")
 // Start starts the session
 func (session *Session) Start() {
 	session.finished.Add(1)
+	session.stop.Add(1)
 	go func() {
 		defer session.finished.Done()
-
 		cConfig, cConfigUnregister := session.config.toPtr()
 		defer cConfigUnregister()
 
@@ -114,7 +114,6 @@ func (session *Session) Start() {
 		defer removeCallback()
 
 		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
-		defer removeTunCallbacks()
 		defer removeTunCallbacks()
 
 		sessionPtr, _ := C.new_session(
@@ -128,7 +127,17 @@ func (session *Session) Start() {
 			session.resError = ErrInitFailed
 			return
 		}
-		session.sessionPtr = sessionPtr
+
+		go func() {
+			session.stop.Wait()
+			C.stop_session(sessionPtr)
+		}()
+
+		go func() {
+			for seconds := range session.reconnectChan {
+				C.reconnect_session(sessionPtr, C.int(seconds))
+			}
+		}()
 
 		res, _ := C.start_session(sessionPtr)
 		if res != 0 {
@@ -147,14 +156,12 @@ func (session *Session) Wait() error {
 
 // Stop stops the session
 func (session *Session) Stop() {
-	C.stop_session(session.sessionPtr)
+	session.stop.Done()
+	close(session.reconnectChan)
 }
 
 // Reconnect session without propagating DISCONNECT event after `seconds` time
 func (session *Session) Reconnect(seconds int) error {
-	if session.sessionPtr == nil {
-		return errors.New("session pointer is nil")
-	}
-	C.reconnect_session(session.sessionPtr, C.int(seconds))
+	session.reconnectChan <- seconds
 	return nil
 }
