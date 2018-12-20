@@ -45,7 +45,6 @@ import "C"
 import (
 	"errors"
 	"sync"
-	"unsafe"
 )
 
 // Session represents the openvpn session
@@ -54,13 +53,12 @@ type Session struct {
 	userCredentials UserCredentials
 	callbacks       interface{}
 	tunnelSetup     TunnelSetup
-	mutex           sync.Mutex
+	finished        sync.WaitGroup
+	stop            sync.WaitGroup
+	reconnectChan   chan int
 
 	// runtime variables
-	finished   *sync.WaitGroup
-	resError   error
-	sessionPtr unsafe.Pointer //handle to created sessionPtr after Start method is called
-	started    bool
+	resError error
 }
 
 // NewSession creates a new session given the callbacks
@@ -71,7 +69,7 @@ func NewSession(config Config, userCredentials UserCredentials, callbacks interf
 		callbacks:       callbacks,
 		tunnelSetup:     &NoOpTunnelSetup{},
 		resError:        nil,
-		finished:        &sync.WaitGroup{},
+		reconnectChan:   make(chan int, 1),
 	}
 }
 
@@ -90,7 +88,7 @@ func NewMobileSession(config Config, userCredentials UserCredentials, callbacks 
 		callbacks:       callbacks,
 		tunnelSetup:     tunSetup,
 		resError:        nil,
-		finished:        &sync.WaitGroup{},
+		reconnectChan:   make(chan int, 1),
 	}
 }
 
@@ -102,44 +100,44 @@ var ErrConnectFailed = errors.New("openvpn3 connect failed")
 
 // Start starts the session
 func (session *Session) Start() {
-	session.mutex.Lock()
-	defer session.mutex.Unlock()
-
-	if session.started {
-		return
-	}
-
-	cConfig, cConfigUnregister := session.config.toPtr()
-	cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
-	callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
-	tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
-	sessionPtr, _ := C.new_session(
-		cConfig,
-		cCredentials,
-		C.callbacks_delegate(callbacksDelegate),
-		C.tun_builder_callbacks(tunBuilderCallbacks),
-	)
-
-	if sessionPtr == nil {
-		cConfigUnregister()
-		cCredentialsUnregister()
-		removeCallback()
-		removeTunCallbacks()
-
-		session.resError = ErrInitFailed
-		return
-	}
-
-	session.sessionPtr = sessionPtr
-	session.started = true
 	session.finished.Add(1)
-
+	session.stop.Add(1)
 	go func() {
-		defer cConfigUnregister()
-		defer cCredentialsUnregister()
-		defer removeCallback()
-		defer removeTunCallbacks()
 		defer session.finished.Done()
+		cConfig, cConfigUnregister := session.config.toPtr()
+		defer cConfigUnregister()
+
+		cCredentials, cCredentialsUnregister := session.userCredentials.toPtr()
+		defer cCredentialsUnregister()
+
+		callbacksDelegate, removeCallback := registerCallbackDelegate(session.callbacks)
+		defer removeCallback()
+
+		tunBuilderCallbacks, removeTunCallbacks := registerTunnelSetupDelegate(session.tunnelSetup)
+		defer removeTunCallbacks()
+
+		sessionPtr, _ := C.new_session(
+			cConfig,
+			cCredentials,
+			C.callbacks_delegate(callbacksDelegate),
+			C.tun_builder_callbacks(tunBuilderCallbacks),
+		)
+
+		if sessionPtr == nil {
+			session.resError = ErrInitFailed
+			return
+		}
+
+		go func() {
+			session.stop.Wait()
+			C.stop_session(sessionPtr)
+		}()
+
+		go func() {
+			for seconds := range session.reconnectChan {
+				C.reconnect_session(sessionPtr, C.int(seconds))
+			}
+		}()
 
 		res, _ := C.start_session(sessionPtr)
 		if res != 0 {
@@ -158,27 +156,12 @@ func (session *Session) Wait() error {
 
 // Stop stops the session
 func (session *Session) Stop() {
-	session.mutex.Lock()
-	defer session.mutex.Unlock()
-
-	if !session.started {
-		return
-	}
-
-	C.stop_session(session.sessionPtr)
-
-	session.started = false
+	session.stop.Done()
+	close(session.reconnectChan)
 }
 
 // Reconnect session without propagating DISCONNECT event after `seconds` time
 func (session *Session) Reconnect(seconds int) error {
-	session.mutex.Lock()
-	defer session.mutex.Unlock()
-
-	if !session.started {
-		return errors.New("session is not started")
-	}
-
-	C.reconnect_session(session.sessionPtr, C.int(seconds))
+	session.reconnectChan <- seconds
 	return nil
 }

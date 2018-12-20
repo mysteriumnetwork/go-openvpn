@@ -31,17 +31,6 @@ func TestSessionStartStopDoesNotPanic(t *testing.T) {
 	session.Stop()
 }
 
-func TestSessionStopDoesNotBlockIfNotStarted(t *testing.T) {
-	session := NewSession(Config{}, UserCredentials{}, &fmtLogger{})
-	session.Stop()
-}
-
-func TestSessionMultipleStarts(t *testing.T) {
-	session := NewSession(Config{}, UserCredentials{}, &fmtLogger{})
-	session.Start()
-	session.Start()
-}
-
 func TestSessionInitFailsForInvalidProfile(t *testing.T) {
 	session := NewSession(Config{}, UserCredentials{}, &fmtLogger{})
 	session.Start()
