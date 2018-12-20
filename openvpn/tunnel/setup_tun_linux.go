@@ -114,7 +114,13 @@ func (service *LinuxTunDeviceManager) deviceExists(device tunDevice) (exists boo
 }
 
 func (service *LinuxTunDeviceManager) deleteDevice(device tunDevice) {
-	cmd := exec.Command("sudo", "ip", "tuntap", "delete", "dev", device.Name, "mode", "tun")
+	// Cleaning here as much as possible, if device deletion failed we at least unassigned IP-addresses.
+	cmd := exec.Command("sudo", "ip", "addr", "flush", "dev", device.Name)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		log.Warn("Failed to flush tun device: ", cmd.Args, " Returned exit error: ", err.Error(), " Cmd output: ", string(output))
+	}
+
+	cmd = exec.Command("sudo", "ip", "tuntap", "delete", "dev", device.Name, "mode", "tun")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Warn("Failed to remove tun device: ", cmd.Args, " Returned exit error: ", err.Error(), " Cmd output: ", string(output))
 	} else {
