@@ -27,7 +27,6 @@ import (
 type middleware struct {
 	// TODO: consider implementing event channel to communicate required callbacks
 	credentialsValidator CredentialsValidator
-	sessionCleaner       SessionCleaner
 	commandWriter        management.CommandWriter
 	currentEvent         clientEvent
 }
@@ -35,14 +34,10 @@ type middleware struct {
 // CredentialsValidator callback checks given auth primitives (i.e. customer identity signature / node's sessionId)
 type CredentialsValidator func(clientID int, username, password string) (bool, error)
 
-// SessionCleaner callback cleans up session after client disconnects
-type SessionCleaner func(username string) error
-
 // NewMiddleware creates server user_auth challenge authentication middleware
-func NewMiddleware(credentialsValidator CredentialsValidator, cleaner SessionCleaner) *middleware {
+func NewMiddleware(credentialsValidator CredentialsValidator) *middleware {
 	return &middleware{
 		credentialsValidator: credentialsValidator,
-		sessionCleaner:       cleaner,
 		commandWriter:        nil,
 		currentEvent:         undefinedEvent,
 	}
