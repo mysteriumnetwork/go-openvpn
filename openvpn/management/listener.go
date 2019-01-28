@@ -69,7 +69,7 @@ func NewManagement(socketAddress Addr, logPrefix string, middlewares ...Middlewa
 
 		middlewares: middlewares,
 
-		shutdownStarted: make(chan bool),
+		shutdownStarted: make(chan bool, 4),
 		shutdownWaiter:  sync.WaitGroup{},
 	}
 }
@@ -79,6 +79,9 @@ func NewManagement(socketAddress Addr, logPrefix string, middlewares ...Middlewa
 // error on any error condition
 func (management *Management) WaitForConnection() error {
 	log.Info(management.logPrefix, "Binding to socket: ", management.BoundAddress.String())
+
+	// clean leftover shutdown requests
+	management.shutdownStarted = make(chan bool, 4)
 
 	listener, err := net.Listen("tcp", management.BoundAddress.String())
 	if err != nil {
@@ -107,9 +110,8 @@ func (management *Management) WaitForConnection() error {
 // Stop initiates managemnt shutdown
 func (management *Management) Stop() {
 	log.Info(management.logPrefix, "Shutdown")
-	management.closesOnce.Do(func() {
-		close(management.shutdownStarted)
-	})
+
+	management.shutdownStarted <- true
 
 	management.shutdownWaiter.Wait()
 
@@ -122,6 +124,7 @@ func (management *Management) listenForConnection(listener net.Listener) {
 
 	connChannel := make(chan net.Conn, 1)
 	go func() {
+		log.Info(management.logPrefix, "accepting new management connect")
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Critical(management.logPrefix, "Connection accept error: ", err)
@@ -133,12 +136,16 @@ func (management *Management) listenForConnection(listener net.Listener) {
 
 	select {
 	case conn := <-connChannel:
+		log.Info(management.logPrefix, "new management connect accepted")
 		if conn != nil {
 			management.Connected <- true
 			go management.serveNewConnection(conn)
 		}
-	case <-management.shutdownStarted:
-		management.Connected <- false
+	case shut := <-management.shutdownStarted:
+		if shut {
+			log.Info(management.logPrefix, "management shutdown started")
+			management.Connected <- false
+		}
 	}
 }
 

@@ -26,10 +26,10 @@ import (
 )
 
 // CreateNewProcess creates new openvpn process with given config params
-func CreateNewProcess(openvpnBinary string, config *config.GenericConfig, middlewares ...management.Middleware) *OpenvpnProcess {
+func CreateNewProcess(openvpnBinary string, config *config.GenericConfig, lastSessionShutdown chan bool, middlewares ...management.Middleware) *OpenvpnProcess {
 	tunnelSetup := tunnel.NewTunnelSetup()
 	execCommand := func(arg ...string) *exec.Cmd {
 		return exec.Command(openvpnBinary, arg...)
 	}
-	return newProcess(tunnelSetup, config, execCommand, middlewares...)
+	return newProcess(tunnelSetup, config, execCommand, lastSessionShutdown, middlewares...)
 }

@@ -57,6 +57,12 @@ func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
 	cmd := cw.command(arguments...)
 
+	// reset stale variables
+	cw.CmdExitError = make(chan error, 1)
+	cw.cmdShutdownStarted = make(chan bool, 1)
+	cw.cmdShutdownWaiter = sync.WaitGroup{}
+	cw.closesOnce = sync.Once{}
+
 	if len(cmd.Args) == 0 {
 		return errors.New("nothing to execute for an empty command")
 	}
