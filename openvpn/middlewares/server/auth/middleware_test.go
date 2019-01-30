@@ -38,15 +38,9 @@ func (f *fakeAuthenticatorStub) fakeAuthenticator(clientID int, username, passwo
 	return f.authenticated, nil
 }
 
-func (f *fakeAuthenticatorStub) fakeSessionCleanup(username string) error {
-	f.called = true
-	f.username = username
-	return nil
-}
-
 func Test_Factory(t *testing.T) {
 	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+	middleware := NewMiddleware(fas.fakeAuthenticator)
 	assert.NotNil(t, middleware)
 }
 
@@ -60,7 +54,7 @@ func Test_ConsumeLineSkips(t *testing.T) {
 		{">USERNAME"},
 	}
 	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+	middleware := NewMiddleware(fas.fakeAuthenticator)
 
 	for _, test := range tests {
 		consumed, err := middleware.ConsumeLine(test.line)
@@ -80,7 +74,7 @@ func Test_ConsumeLineTakes(t *testing.T) {
 	}
 
 	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+	middleware := NewMiddleware(fas.fakeAuthenticator)
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
@@ -101,7 +95,7 @@ func Test_ConsumeLineAuthState(t *testing.T) {
 
 	for _, test := range tests {
 		fas := fakeAuthenticatorStub{}
-		middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+		middleware := NewMiddleware(fas.fakeAuthenticator)
 		mockConnection := &management.MockConnection{}
 		middleware.Start(mockConnection)
 
@@ -121,7 +115,7 @@ func Test_ConsumeLineNotAuthState(t *testing.T) {
 
 	for _, test := range tests {
 		fas := fakeAuthenticatorStub{}
-		middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+		middleware := NewMiddleware(fas.fakeAuthenticator)
 		mockConnection := &management.MockConnection{}
 		middleware.Start(mockConnection)
 
@@ -143,7 +137,7 @@ func Test_ConsumeLineAuthTrueChecker(t *testing.T) {
 	}
 	fas := fakeAuthenticatorStub{}
 	fas.authenticated = true
-	middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+	middleware := NewMiddleware(fas.fakeAuthenticator)
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
@@ -169,7 +163,7 @@ func Test_ConsumeLineAuthFalseChecker(t *testing.T) {
 	}
 	fas := fakeAuthenticatorStub{}
 	fas.authenticated = false
-	middleware := NewMiddleware(fas.fakeAuthenticator, fas.fakeSessionCleanup)
+	middleware := NewMiddleware(fas.fakeAuthenticator)
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
