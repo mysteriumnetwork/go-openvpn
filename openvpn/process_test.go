@@ -39,7 +39,8 @@ func TestOpenvpnProcessStartsAndStopsSuccessfully(t *testing.T) {
 		return execTestHelper.ExecCommand("openvpn", arg...)
 	}
 	execTestHelper.AddExecResult("", "", 0, 0, "openvpn")
-	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
+	lastSessionShutdown := make(chan bool)
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand, lastSessionShutdown)
 
 	err := process.Start()
 	assert.NoError(t, err)
@@ -58,8 +59,34 @@ func TestOpenvpnProcessStartReportsErrorIfCmdWrapperDiesTooEarly(t *testing.T) {
 	execCommand := func(arg ...string) *exec.Cmd {
 		return execTestHelper.ExecCommand("openvpn", arg...)
 	}
-	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand)
+	lastSessionShutdown := make(chan bool)
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand, lastSessionShutdown)
 
 	err := process.Start()
 	assert.Error(t, err)
+}
+
+func TestOpenvpnProcessStopsIfFinalSession(t *testing.T) {
+	execTestHelper := NewExecCmdTestHelper("TestHelperProcess_Openvpn")
+	execCommand := func(arg ...string) *exec.Cmd {
+		return execTestHelper.ExecCommand("openvpn", arg...)
+	}
+	execTestHelper.AddExecResult("", "", 0, 0, "openvpn")
+	lastSessionShutdown := make(chan bool)
+	process := newProcess(&tunnel.NoopSetup{}, &config.GenericConfig{}, execCommand, lastSessionShutdown)
+
+	err := process.Start()
+	assert.NoError(t, err)
+
+	testDone := make(chan struct{})
+	go func() {
+		err = process.Wait()
+		assert.NoError(t, err)
+		testDone <- struct{}{}
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	lastSessionShutdown <- true
+	<-testDone
 }

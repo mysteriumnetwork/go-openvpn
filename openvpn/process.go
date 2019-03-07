@@ -125,7 +125,6 @@ func (openvpn *OpenvpnProcess) Wait() error {
 			return exitError
 		}
 	}
-	return nil
 }
 
 // Stop stops the openvpn process

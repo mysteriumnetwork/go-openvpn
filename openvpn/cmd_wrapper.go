@@ -39,6 +39,7 @@ func NewCmdWrapper(logPrefix string, commandFunc CommandFunc) *CmdWrapper {
 		CmdExitError:       make(chan error, 1), //channel should have capacity to hold single process exit error
 		cmdShutdownStarted: make(chan bool),
 		cmdShutdownWaiter:  sync.WaitGroup{},
+		closesOnce:         sync.Once{},
 	}
 }
 
@@ -56,12 +57,6 @@ type CmdWrapper struct {
 func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	// Create the command
 	cmd := cw.command(arguments...)
-
-	// reset stale variables
-	cw.CmdExitError = make(chan error, 1)
-	cw.cmdShutdownStarted = make(chan bool, 1)
-	cw.cmdShutdownWaiter = sync.WaitGroup{}
-	cw.closesOnce = sync.Once{}
 
 	if len(cmd.Args) == 0 {
 		return errors.New("nothing to execute for an empty command")
