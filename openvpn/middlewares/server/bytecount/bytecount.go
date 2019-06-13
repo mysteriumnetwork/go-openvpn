@@ -27,6 +27,7 @@ import (
 
 var rule = regexp.MustCompile("^>BYTECOUNT_CLI:([0-9]*),([0-9]*),([0-9]*)$")
 
+// SessionByteChangeHandler is the callback we call with the session byte count
 type SessionByteChangeHandler func(SessionByteCount)
 
 // SessionByteCount represents
@@ -36,19 +37,21 @@ type SessionByteCount struct {
 
 // Middleware reports the different session byte counts
 type Middleware struct {
-	handler SessionByteChangeHandler
+	handler        SessionByteChangeHandler
+	updateInterval int
 }
 
 // NewMiddleware returns a new instance of the middleware
-func NewMiddleware(h SessionByteChangeHandler) *Middleware {
+func NewMiddleware(h SessionByteChangeHandler, updateInterval int) *Middleware {
 	return &Middleware{
-		handler: h,
+		handler:        h,
+		updateInterval: updateInterval,
 	}
 }
 
 // Start starts the middleware
 func (m *Middleware) Start(cw management.CommandWriter) error {
-	_, err := cw.SingleLineCommand("bytecount %v", 1)
+	_, err := cw.SingleLineCommand("bytecount %v", m.updateInterval)
 	return err
 }
 

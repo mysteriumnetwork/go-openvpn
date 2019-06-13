@@ -33,7 +33,7 @@ func (mh *mockHandler) Handle(s SessionByteCount) {
 
 func Test_ConsumesOKLine(t *testing.T) {
 	statsRecorder := &mockHandler{}
-	middleware := NewMiddleware(statsRecorder.Handle)
+	middleware := NewMiddleware(statsRecorder.Handle, 1)
 	consumed, err := middleware.ConsumeLine(">BYTECOUNT_CLI:1,2,3")
 	assert.Nil(t, err)
 	assert.True(t, consumed)
@@ -51,7 +51,7 @@ func Test_IgnoresMalformedLines(t *testing.T) {
 	}
 	for _, v := range badLines {
 		statsRecorder := &mockHandler{}
-		middleware := NewMiddleware(statsRecorder.Handle)
+		middleware := NewMiddleware(statsRecorder.Handle, 1)
 		consumed, err := middleware.ConsumeLine(v)
 		assert.Nil(t, err)
 		assert.False(t, consumed)
