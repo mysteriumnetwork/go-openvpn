@@ -27,6 +27,8 @@ import (
 
 var rule = regexp.MustCompile("^>BYTECOUNT_CLI:([0-9]*),([0-9]*),([0-9]*)$")
 
+type SessionByteChangeHandler func(SessionByteCount)
+
 // SessionByteCount represents
 type SessionByteCount struct {
 	ClientID, BytesIn, BytesOut int
@@ -34,13 +36,13 @@ type SessionByteCount struct {
 
 // Middleware reports the different session byte counts
 type Middleware struct {
-	c chan SessionByteCount
+	handler SessionByteChangeHandler
 }
 
 // NewMiddleware returns a new instance of the middleware
-func NewMiddleware(c chan SessionByteCount) *Middleware {
+func NewMiddleware(h SessionByteChangeHandler) *Middleware {
 	return &Middleware{
-		c: c,
+		handler: h,
 	}
 }
 
@@ -83,13 +85,11 @@ func (m *Middleware) ConsumeLine(line string) (consumed bool, err error) {
 		return false, fmt.Errorf("could not parse clientID from match[3]: %q", match[3])
 	}
 
-	go func() {
-		m.c <- SessionByteCount{
-			ClientID: clientID,
-			BytesIn:  bytesIn,
-			BytesOut: bytesOut,
-		}
-	}()
+	m.handler(SessionByteCount{
+		ClientID: clientID,
+		BytesIn:  bytesIn,
+		BytesOut: bytesOut,
+	})
 
 	return true, nil
 }

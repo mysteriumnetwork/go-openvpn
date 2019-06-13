@@ -19,21 +19,27 @@ package bytecount
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
+type mockHandler struct {
+	sbc SessionByteCount
+}
+
+func (mh *mockHandler) Handle(s SessionByteCount) {
+	mh.sbc = s
+}
+
 func Test_ConsumesOKLine(t *testing.T) {
-	statsRecorder := make(chan SessionByteCount)
-	middleware := NewMiddleware(statsRecorder)
+	statsRecorder := &mockHandler{}
+	middleware := NewMiddleware(statsRecorder.Handle)
 	consumed, err := middleware.ConsumeLine(">BYTECOUNT_CLI:1,2,3")
 	assert.Nil(t, err)
-	res := <-statsRecorder
 	assert.True(t, consumed)
-	assert.Equal(t, 1, res.ClientID)
-	assert.Equal(t, 2, res.BytesIn)
-	assert.Equal(t, 3, res.BytesOut)
+	assert.Equal(t, 1, statsRecorder.sbc.ClientID)
+	assert.Equal(t, 2, statsRecorder.sbc.BytesIn)
+	assert.Equal(t, 3, statsRecorder.sbc.BytesOut)
 }
 
 func Test_IgnoresMalformedLines(t *testing.T) {
@@ -44,17 +50,11 @@ func Test_IgnoresMalformedLines(t *testing.T) {
 		"BYTECOUNT_CLI:1,2,3",
 	}
 	for _, v := range badLines {
-		statsRecorder := make(chan SessionByteCount)
-		middleware := NewMiddleware(statsRecorder)
+		statsRecorder := &mockHandler{}
+		middleware := NewMiddleware(statsRecorder.Handle)
 		consumed, err := middleware.ConsumeLine(v)
 		assert.Nil(t, err)
 		assert.False(t, consumed)
-
-		select {
-		case _ = <-statsRecorder:
-			assert.Fail(t, "should not have received the line")
-		case <-time.After(time.Millisecond * 15):
-			break
-		}
+		assert.EqualValues(t, SessionByteCount{}, statsRecorder.sbc)
 	}
 }
