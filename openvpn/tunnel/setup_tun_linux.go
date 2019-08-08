@@ -18,6 +18,7 @@
 package tunnel
 
 import (
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -89,9 +90,16 @@ func (service *LinuxTunDeviceManager) createTunDevice(device tunDevice) (err err
 		return err
 	}
 
-	if exists {
-		log.Info(tunLogPrefix, device.Name+" device already exists, attempting to use it")
+	used, err := service.deviceUsed(device)
+	if err != nil {
 		return
+	}
+
+	if exists && !used {
+		log.Info(tunLogPrefix, device.Name+" device already exists, but not used, attempting to use it")
+		return
+	} else if used {
+		return log.Error("failed to get free tunnel device")
 	}
 
 	cmd := exec.Command("sudo", "ip", "tuntap", "add", "dev", device.Name, "mode", "tun")
@@ -111,6 +119,24 @@ func (service *LinuxTunDeviceManager) deviceExists(device tunDevice) (exists boo
 	}
 
 	return false, err
+}
+
+func (service *LinuxTunDeviceManager) deviceUsed(device tunDevice) (exists bool, err error) {
+	contents, err := ioutil.ReadFile("/sys/class/net/" + device.Name + "/carrier")
+	if err != nil {
+		return false, err
+	}
+
+	value, err := strconv.Atoi(string(contents))
+	if err != nil {
+		return false, err
+	}
+
+	if value == 1 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (service *LinuxTunDeviceManager) deleteDevice(device tunDevice) {
@@ -133,9 +159,15 @@ func findFreeTunDevice() (tun tunDevice, err error) {
 	// search only among first 10 tun devices
 	for i := 0; i <= 10; i++ {
 		tunName := "tun" + strconv.Itoa(i)
-		tunFile := "/sys/class/net/tun" + tunName
-		if _, err := os.Stat(tunFile); os.IsNotExist(err) {
+		tunFile := "/sys/class/net/" + tunName
+		if _, err := os.Stat(tunFile); err == nil {
+			log.Trace("tunnel exists: " + tunFile)
+			continue
+		} else if os.IsNotExist(err) {
+			log.Trace("tunnel does not exists: " + tunFile)
 			return tunDevice{tunName}, nil
+		} else if err != nil {
+			log.Error("failed to check if tunnel device exists", err)
 		}
 	}
 
