@@ -132,11 +132,7 @@ func (service *LinuxTunDeviceManager) deviceUsed(device tunDevice) (exists bool,
 		return false, err
 	}
 
-	if value == 1 {
-		return true, nil
-	}
-
-	return false, nil
+	return value == 1, nil
 }
 
 func (service *LinuxTunDeviceManager) deleteDevice(device tunDevice) {
