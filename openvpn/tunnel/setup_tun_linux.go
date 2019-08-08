@@ -24,6 +24,8 @@ import (
 	"strconv"
 
 	log "github.com/cihub/seelog"
+	"github.com/pkg/errors"
+
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/config"
 )
 
@@ -82,12 +84,12 @@ func (service *LinuxTunDeviceManager) Stop() {
 func (service *LinuxTunDeviceManager) createTunDevice(device tunDevice) (err error) {
 	err = service.createDeviceNode()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create device node")
 	}
 
 	exists, err := service.deviceExists(device)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to check if device exists")
 	}
 
 	var used bool
@@ -95,13 +97,13 @@ func (service *LinuxTunDeviceManager) createTunDevice(device tunDevice) (err err
 	if exists {
 		used, err = service.deviceUsed(device)
 		if err != nil {
-			return
+			return errors.Wrap(err, "failed to check device used status")
 		}
 	}
 
 	if exists && !used {
 		log.Info(tunLogPrefix, device.Name+" device already exists, but not used, attempting to use it")
-		return
+		return nil
 	} else if used {
 		return log.Error("failed to get free tunnel device")
 	}
