@@ -90,9 +90,13 @@ func (service *LinuxTunDeviceManager) createTunDevice(device tunDevice) (err err
 		return err
 	}
 
-	used, err := service.deviceUsed(device)
-	if err != nil {
-		return
+	var used bool
+
+	if exists {
+		used, err = service.deviceUsed(device)
+		if err != nil {
+			return
+		}
 	}
 
 	if exists && !used {
@@ -121,7 +125,7 @@ func (service *LinuxTunDeviceManager) deviceExists(device tunDevice) (exists boo
 	return false, err
 }
 
-func (service *LinuxTunDeviceManager) deviceUsed(device tunDevice) (exists bool, err error) {
+func (service *LinuxTunDeviceManager) deviceUsed(device tunDevice) (used bool, err error) {
 	contents, err := ioutil.ReadFile("/sys/class/net/" + device.Name + "/carrier")
 	if err != nil {
 		return false, err
