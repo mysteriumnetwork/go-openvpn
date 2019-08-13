@@ -159,7 +159,7 @@ func (service *LinuxTunDeviceManager) deviceExists(tunName string) (exists bool,
 	if _, err := os.Stat(tunFile); err == nil {
 		return true, nil
 	}
-	return false, nil
+	return false, err
 }
 
 func (service *LinuxTunDeviceManager) createDeviceNode() error {
