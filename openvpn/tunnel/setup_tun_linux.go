@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	log "github.com/cihub/seelog"
 	"github.com/pkg/errors"
@@ -94,13 +95,13 @@ func (service *LinuxTunDeviceManager) createTunDevice(deviceName string) (err er
 	return nil
 }
 
-func (service *LinuxTunDeviceManager) deviceUsed(deviceName string) (used bool, err error) {
+func deviceUsed(deviceName string) (used bool, err error) {
 	contents, err := ioutil.ReadFile("/sys/class/net/" + deviceName + "/carrier")
 	if err != nil {
 		return false, err
 	}
 
-	value, err := strconv.Atoi(string(contents))
+	value, err := strconv.Atoi(strings.TrimSuffix(string(contents), "\n"))
 	if err != nil {
 		return false, err
 	}
@@ -130,7 +131,7 @@ func (service *LinuxTunDeviceManager) getNextFreeTunDevice() (tun tunDevice, err
 		tunName := "tun" + strconv.Itoa(i)
 		tunFile := "/sys/class/net/" + tunName
 		if _, err := os.Stat(tunFile); err == nil {
-			used, err := service.deviceUsed(tunName)
+			used, err := deviceUsed(tunName)
 			if err != nil {
 				return tunDevice{}, errors.Wrap(err, "failed to check if device is used")
 			}
