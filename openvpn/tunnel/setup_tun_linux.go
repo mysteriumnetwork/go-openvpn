@@ -52,12 +52,8 @@ func (service *LinuxTunDeviceManager) Setup(configuration *config.GenericConfig)
 	configuration.SetScriptParam("iproute", config.SimplePath("nonpriv-ip"))
 	service.scriptSetup = configuration.GetFullScriptPath(config.SimplePath("prepare-env.sh"))
 
-	device, err := findFreeTunDevice()
+	device, err := service.getNextFreeTunDevice()
 	if err != nil {
-		return err
-	}
-
-	if err := service.createTunDevice(device); err != nil {
 		return err
 	}
 
@@ -67,12 +63,12 @@ func (service *LinuxTunDeviceManager) Setup(configuration *config.GenericConfig)
 	return nil
 }
 
-// Stop stops the tunnel
+// Stop destroys tunnel device
 func (service *LinuxTunDeviceManager) Stop() {
 	var err error
 	var exists bool
 
-	if exists, err = service.deviceExists(service.device); err != nil {
+	if exists, err = service.deviceExists(service.device.Name); err != nil {
 		log.Info(tunLogPrefix, err)
 	}
 
@@ -81,54 +77,25 @@ func (service *LinuxTunDeviceManager) Stop() {
 	}
 }
 
-func (service *LinuxTunDeviceManager) createTunDevice(device tunDevice) (err error) {
+func (service *LinuxTunDeviceManager) createTunDevice(deviceName string) (err error) {
 	err = service.createDeviceNode()
 	if err != nil {
 		return errors.Wrap(err, "failed to create device node")
 	}
 
-	exists, err := service.deviceExists(device)
-	if err != nil {
-		return errors.Wrap(err, "failed to check if device exists")
-	}
-
-	var used bool
-
-	if exists {
-		used, err = service.deviceUsed(device)
-		if err != nil {
-			return errors.Wrap(err, "failed to check device used status")
-		}
-	}
-
-	if exists && !used {
-		log.Info(tunLogPrefix, device.Name+" device already exists, but not used, attempting to use it")
-		return nil
-	} else if used {
-		return log.Error("failed to get free tunnel device")
-	}
-
-	cmd := exec.Command("sudo", "ip", "tuntap", "add", "dev", device.Name, "mode", "tun")
+	cmd := exec.Command("sudo", "ip", "tuntap", "add", "dev", deviceName, "mode", "tun")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Warn("Failed to add tun device: ", cmd.Args, " Returned exit error: ", err.Error(), " Cmd output: ", string(output))
 		// we should not proceed without tun device
 		return err
 	}
 
-	log.Info(tunLogPrefix, device.Name+" device created")
+	log.Info(tunLogPrefix, deviceName+" device created")
 	return nil
 }
 
-func (service *LinuxTunDeviceManager) deviceExists(device tunDevice) (exists bool, err error) {
-	if _, err := os.Stat("/sys/class/net/" + device.Name); err == nil {
-		return true, nil
-	}
-
-	return false, err
-}
-
-func (service *LinuxTunDeviceManager) deviceUsed(device tunDevice) (used bool, err error) {
-	contents, err := ioutil.ReadFile("/sys/class/net/" + device.Name + "/carrier")
+func (service *LinuxTunDeviceManager) deviceUsed(deviceName string) (used bool, err error) {
+	contents, err := ioutil.ReadFile("/sys/class/net/" + deviceName + "/carrier")
 	if err != nil {
 		return false, err
 	}
@@ -156,17 +123,28 @@ func (service *LinuxTunDeviceManager) deleteDevice(device tunDevice) {
 	}
 }
 
-// FindFreeTunDevice returns first free tun device on system
-func findFreeTunDevice() (tun tunDevice, err error) {
+// getNextFreeTunDevice returns first free tun device on system
+func (service *LinuxTunDeviceManager) getNextFreeTunDevice() (tun tunDevice, err error) {
 	// search only among first 10 tun devices
 	for i := 0; i <= 10; i++ {
 		tunName := "tun" + strconv.Itoa(i)
 		tunFile := "/sys/class/net/" + tunName
 		if _, err := os.Stat(tunFile); err == nil {
-			log.Trace("tunnel exists: " + tunFile)
-			continue
+			used, err := service.deviceUsed(tunName)
+			if err != nil {
+				return tunDevice{}, errors.Wrap(err, "failed to check if device is used")
+			}
+			if !used {
+				log.Trace("tunnel exists, but not used, reusing: " + tunFile)
+				return tunDevice{tunName}, nil
+			}
+			log.Trace("tunnel exists and is taken: " + tunFile)
 		} else if os.IsNotExist(err) {
-			log.Trace("tunnel does not exists: " + tunFile)
+			log.Trace("tunnel does not exists, creating: " + tunFile)
+			err := service.createTunDevice(tunName)
+			if err != nil {
+				return tunDevice{}, errors.Wrap(err, "failed to create a tunnel: "+tunFile)
+			}
 			return tunDevice{tunName}, nil
 		} else if err != nil {
 			log.Error("failed to check if tunnel device exists", err)
@@ -174,6 +152,14 @@ func findFreeTunDevice() (tun tunDevice, err error) {
 	}
 
 	return tun, ErrNoFreeTunDevice
+}
+
+func (service *LinuxTunDeviceManager) deviceExists(tunName string) (exists bool, err error) {
+	tunFile := "/sys/class/net/" + tunName
+	if _, err := os.Stat(tunFile); err == nil {
+		return true, nil
+	}
+	return false, err
 }
 
 func (service *LinuxTunDeviceManager) createDeviceNode() error {
