@@ -53,6 +53,11 @@ func (service *LinuxTunDeviceManager) Setup(configuration *config.GenericConfig)
 	configuration.SetScriptParam("iproute", config.SimplePath("nonpriv-ip"))
 	service.scriptSetup = configuration.GetFullScriptPath(config.SimplePath("prepare-env.sh"))
 
+	err := service.createDeviceNode()
+	if err != nil {
+		return errors.Wrap(err, "failed to create device node")
+	}
+
 	device, err := service.getNextFreeTunDevice()
 	if err != nil {
 		return err
@@ -79,11 +84,6 @@ func (service *LinuxTunDeviceManager) Stop() {
 }
 
 func (service *LinuxTunDeviceManager) createTunDevice(deviceName string) (err error) {
-	err = service.createDeviceNode()
-	if err != nil {
-		return errors.Wrap(err, "failed to create device node")
-	}
-
 	cmd := exec.Command("sudo", "ip", "tuntap", "add", "dev", deviceName, "mode", "tun")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		log.Warn("Failed to add tun device: ", cmd.Args, " Returned exit error: ", err.Error(), " Cmd output: ", string(output))
