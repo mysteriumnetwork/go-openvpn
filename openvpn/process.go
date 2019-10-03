@@ -129,3 +129,8 @@ func (openvpn *OpenvpnProcess) Stop() {
 
 	openvpn.tunnelSetup.Stop()
 }
+
+// DeviceName returns tunnel device name
+func (openvpn *OpenvpnProcess) DeviceName() string {
+	return openvpn.tunnelSetup.DeviceName()
+}

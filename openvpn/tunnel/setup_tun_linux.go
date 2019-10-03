@@ -83,6 +83,11 @@ func (service *LinuxTunDeviceManager) Stop() {
 	}
 }
 
+// DeviceName returns tunnel device name
+func (service *LinuxTunDeviceManager) DeviceName() string {
+	return service.device.Name
+}
+
 func (service *LinuxTunDeviceManager) createTunDevice(deviceName string) (err error) {
 	cmd := exec.Command("sudo", "ip", "tuntap", "add", "dev", deviceName, "mode", "tun")
 	if output, err := cmd.CombinedOutput(); err != nil {

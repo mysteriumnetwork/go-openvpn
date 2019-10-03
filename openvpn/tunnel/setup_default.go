@@ -33,3 +33,8 @@ func (ds *DefaultSetup) Setup(config *config.GenericConfig) error {
 func (ds *DefaultSetup) Stop() {
 
 }
+
+// DeviceName returns tunnel device name
+func (ds *DefaultSetup) DeviceName() string {
+	return "tun"
+}

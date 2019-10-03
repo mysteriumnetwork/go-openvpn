@@ -32,4 +32,5 @@ var ErrNoFreeTunDevice = errors.New("no free tun device found")
 type Setup interface {
 	Setup(config *config.GenericConfig) error
 	Stop()
+	DeviceName() string
 }
