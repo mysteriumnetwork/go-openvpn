@@ -32,3 +32,8 @@ func (gts *NoopSetup) Setup(config *config.GenericConfig) error {
 func (gts *NoopSetup) Stop() {
 
 }
+
+// DeviceName returns tunnel device name
+func (gts *NoopSetup) DeviceName() string {
+	return ""
+}

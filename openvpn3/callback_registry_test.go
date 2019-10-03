@@ -17,8 +17,9 @@
 
 package openvpn3
 
-import "testing"
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 

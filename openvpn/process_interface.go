@@ -23,4 +23,5 @@ type Process interface {
 	Start() error
 	Wait() error
 	Stop()
+	DeviceName() string
 }
