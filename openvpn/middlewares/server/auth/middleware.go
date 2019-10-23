@@ -20,7 +20,7 @@ package auth
 import (
 	"strings"
 
-	log "github.com/cihub/seelog"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 )
 
@@ -116,10 +116,10 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 		}
 		m.startOfEvent(eventType, ID, undefined)
 	case address:
-		log.Info("Address for client: ", eventData)
+		log.Info("Address for client:", eventData)
 	default:
-		log.Error("Undefined user notification event: ", eventType, eventData)
-		log.Error("Original line was: ", line)
+		log.Error("Undefined user notification event:", eventType, eventData)
+		log.Error("Original line was:", line)
 	}
 	return true, nil
 }
@@ -150,12 +150,12 @@ func (m *middleware) handleClientEvent(event clientEvent) {
 		password := event.env["password"]
 		err := m.authenticateClient(event.clientID, event.clientKey, username, password)
 		if err != nil {
-			log.Error("Unable to authenticate client. Error: ", err)
+			log.Error("Unable to authenticate client:", err)
 		}
 	case established:
-		log.Info("Client with ID: ", event.clientID, " connection established successfully")
+		log.Info("Client with ID:", event.clientID, "connection established successfully")
 	case disconnect:
-		log.Info("Client with ID: ", event.clientID, " disconnected")
+		log.Info("Client with ID:", event.clientID, "disconnected")
 		// NOTE: do not cleanup session after disconnect event risen by transport itself
 		//  cleanup session only by user's intent
 	}
@@ -167,11 +167,11 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "missing username or password")
 	}
 
-	log.Info("authenticating user: ", username, " clientID: ", clientID, " clientKey: ", clientKey)
+	log.Info("Authenticating user:", username, "clientID:", clientID, "clientKey:", clientKey)
 
 	authenticated, err := m.credentialsValidator(clientID, username, password)
 	if err != nil {
-		log.Error("Authentication error: ", err)
+		log.Error("Authentication error:", err)
 		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "internal error")
 	}
 

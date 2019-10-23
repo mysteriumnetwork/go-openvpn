@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/cihub/seelog"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 )
 
 // Addr struct represents local address on which listener waits for incoming management connections
@@ -78,7 +78,7 @@ func NewManagement(socketAddress Addr, logPrefix string, middlewares ...Middlewa
 // channel which receives true when connection is accepted or false overwise (i.e. listener stop requested). It returns non nil
 // error on any error condition
 func (management *Management) WaitForConnection() error {
-	log.Info(management.logPrefix, "Binding to socket: ", management.BoundAddress.String())
+	log.Info(management.logPrefix, "Binding to socket:", management.BoundAddress.String())
 
 	listener, err := net.Listen("tcp", management.BoundAddress.String())
 	if err != nil {
@@ -124,7 +124,7 @@ func (management *Management) listenForConnection(listener net.Listener) {
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Critical(management.logPrefix, "Connection accept error: ", err)
+			log.Error(management.logPrefix, "Connection accept error:", err)
 			close(connChannel)
 			return
 		}
@@ -176,7 +176,7 @@ func (management *Management) startMiddlewares(connection CommandWriter) {
 		if err != nil {
 			//TODO what we should do with errors on middleware start? Stop already running, close cmdWriter, bailout?
 			//at least log errors for now
-			log.Error(management.logPrefix, "Middleware startup error: ", err)
+			log.Error(management.logPrefix, "Middleware startup error:", err)
 		}
 	}
 }
@@ -186,7 +186,7 @@ func (management *Management) stopMiddlewares(connection CommandWriter) {
 		err := middleware.Stop(connection)
 		if err != nil {
 			//log error but do not stop cleaning process
-			log.Warn(management.logPrefix, "Middleware stop error. ", err)
+			log.Warn(management.logPrefix, "Middleware stop error:", err)
 		}
 	}
 }
@@ -196,12 +196,12 @@ func (management *Management) consumeOpenvpnConnectionOutput(input io.Reader, ou
 	for {
 		line, err := reader.ReadLine()
 		if err != nil {
-			log.Warn(management.logPrefix, "Connection failed to read. ", err)
+			log.Warn(management.logPrefix, "Connection failed to read:", err)
 			close(outputChannel)
 			close(eventChannel)
 			return
 		}
-		log.Debug(management.logPrefix, "Line received: ", line)
+		log.Debug(management.logPrefix, "Line received:", line)
 
 		output := outputChannel
 		if strings.HasPrefix(line, ">") {
@@ -212,26 +212,26 @@ func (management *Management) consumeOpenvpnConnectionOutput(input io.Reader, ou
 		select {
 		case output <- line:
 		case <-time.After(time.Second):
-			log.Error(management.logPrefix, "Failed to transport line: ", line)
+			log.Error(management.logPrefix, "Failed to transport line:", line)
 		}
 	}
 }
 
 func (management *Management) deliverOpenvpnManagementEvents(eventChannel chan string) {
 	for event := range eventChannel {
-		log.Trace(management.logPrefix, "Line delivering: ", event)
+		log.Debug(management.logPrefix, "Line delivering:", event)
 
 		lineConsumed := false
 		for _, middleware := range management.middlewares {
 			consumed, err := middleware.ConsumeLine(event)
 			if err != nil {
-				log.Error(management.logPrefix, "Failed to deliver event: ", event, ". ", err)
+				log.Error(management.logPrefix, "Failed to deliver event:", event, ". ", err)
 			}
 
 			lineConsumed = lineConsumed || consumed
 		}
 		if !lineConsumed {
-			log.Trace(management.logPrefix, "Line not delivered: ", event)
+			log.Debug(management.logPrefix, "Line not delivered:", event)
 		}
 	}
 	log.Info(management.logPrefix, "Event consumer is done")

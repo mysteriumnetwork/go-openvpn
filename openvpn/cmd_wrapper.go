@@ -20,12 +20,11 @@ package openvpn
 import (
 	"bufio"
 	"errors"
+	"io"
 	"os/exec"
 	"sync"
 
-	"io"
-
-	log "github.com/cihub/seelog"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 )
 
 // CommandFunc represents the func for running external commands
@@ -61,7 +60,7 @@ func (cw *CmdWrapper) Start(arguments []string) (err error) {
 		return errors.New("nothing to execute for an empty command")
 	}
 
-	log.Info(cw.logPrefix, "Starting cmd: ", cmd.Args[0], " with arguments: ", arguments)
+	log.Info(cw.logPrefix, "Starting cmd:", cmd.Args[0], "with arguments:", arguments)
 
 	// Attach logger for stdout and stderr
 	stdout, err := cmd.StdoutPipe()
@@ -72,8 +71,8 @@ func (cw *CmdWrapper) Start(arguments []string) (err error) {
 	if err != nil {
 		return err
 	}
-	go cw.outputToLog(stdout, "Stdout: ")
-	go cw.outputToLog(stderr, "Stderr: ")
+	go cw.outputToLog(stdout, "Stdout:")
+	go cw.outputToLog(stderr, "Stderr:")
 
 	// Try to start the cmd
 	err = cmd.Start()
@@ -109,10 +108,10 @@ func (cw *CmdWrapper) Stop() {
 func (cw *CmdWrapper) outputToLog(output io.ReadCloser, streamPrefix string) {
 	scanner := bufio.NewScanner(output)
 	for scanner.Scan() {
-		log.Trace(cw.logPrefix, streamPrefix, scanner.Text())
+		log.Debug(cw.logPrefix, streamPrefix, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		log.Warn(cw.logPrefix, streamPrefix, "(failed to read: ", err, ")")
+		log.Warn(cw.logPrefix, streamPrefix, "failed to read:", err)
 	} else {
 		log.Info(cw.logPrefix, streamPrefix, "stream ended")
 	}
@@ -128,6 +127,6 @@ func (cw *CmdWrapper) waitForShutdown(cmd *exec.Cmd) {
 	//First - shutdown gracefully by sending SIGINT (the only two signals guaranteed to be present in all OS'es SIGINT and SIGKILL)
 	//TODO - add timer and send SIGKILL after timeout?
 	if err := cmd.Process.Signal(exitSignal); err != nil {
-		log.Error(cw.logPrefix, "Error killing cw = ", err)
+		log.Error(cw.logPrefix, "Error killing cw:", err)
 	}
 }
