@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  digest = "1:50e893a85575fa48dc4982a279e50e2fd8b74e4f7c587860c1e25c77083b8125"
-  name = "github.com/cihub/seelog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "d2c6e5aa9fbfdd1c624e140287063c7730654115"
-  version = "v2.6"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -58,7 +50,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/cihub/seelog",
     "github.com/magefile/mage/mage",
     "github.com/magefile/mage/mg",
     "github.com/magefile/mage/sh",

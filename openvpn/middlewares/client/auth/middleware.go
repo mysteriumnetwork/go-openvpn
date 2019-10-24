@@ -20,8 +20,8 @@ package auth
 import (
 	"regexp"
 
-	log "github.com/cihub/seelog"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 )
 
@@ -48,7 +48,7 @@ func NewMiddleware(credentials CredentialsProvider) *middleware {
 
 func (m *middleware) Start(commandWriter management.CommandWriter) error {
 	m.commandWriter = commandWriter
-	log.Info("starting client user-pass provider middleware")
+	log.Info("Starting client user-pass provider middleware")
 	return nil
 }
 
@@ -67,7 +67,7 @@ func (m *middleware) ConsumeLine(line string) (consumed bool, err error) {
 		return false, err
 	}
 
-	log.Info("authenticating user ", username)
+	log.Info("Authenticating user", username)
 
 	_, err = m.commandWriter.SingleLineCommand("password 'Auth' %s", password)
 	if err != nil {
