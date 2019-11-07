@@ -1,0 +1,11 @@
+export PLATFORM=ios
+export APPLE_FAMILY=1
+export GPP_CMD=arm-apple-darwin11-clang++
+export GCC_CMD=arm-apple-darwin11-clang
+export AR_CMD=arm-apple-darwin11-ar
+export RANLIB_CMD=arm-apple-darwin11-ranlib
+export PLATFORM_FLAGS="-arch arm64 -miphoneos-version-min=10.3"
+export OTHER_COMPILER_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden"
+export CXX_COMPILER_FLAGS="-std=c++11 -stdlib=libc++"
+export LIB_OPT_LEVEL="-O3"
+export LIB_FPIC=""

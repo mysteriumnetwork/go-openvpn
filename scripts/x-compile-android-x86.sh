@@ -9,24 +9,27 @@ echo "Building for: $PLATFORM"
 
 echo "Bootstrapping Android NDK"
 
-$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_386 --api=16 --arch=x86
+#$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_386 --api=16 --arch=x86
 
 
 echo BUILD DEPS
 pushd $DEP_DIR
 rm -rf asio* lz4* mbedtls* #lzo* boost* minicrypto openssl* polarssl* snappy*
-echo "******* ASIO"
-$O3/core/deps/asio/build-asio
 echo "******* MBEDTLS"
 TARGETS=android-x86 $O3/core/scripts/android/build-mbedtls
 echo "******* LZ4"
 TARGETS=android-x86 $O3/core/scripts/android/build-lz4
+echo "******* ASIO"
+$O3/core/deps/asio/build-asio
 popd
+
+echo "Done building deps"
 
 . core/vars/setpath
 . core/vars/vars-android-x86
 
 cd core/adapter
+echo "Building library"
 PROF=$PLATFORM MTLS=1 NOSSL=1 LZ4=1 ASIO=1 ECHO=1 CO=1 build library
 
 LIB_OUT="/go-src-root/openvpn3/bridge/libopenvpn3_${LIBSUFFIX}.a"

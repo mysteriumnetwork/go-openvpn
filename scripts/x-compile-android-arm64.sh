@@ -9,16 +9,18 @@ echo "Building for: $PLATFORM"
 
 echo "Bootstrapping Android NDK"
 
-$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_ARM64 --api=21 --arch=arm64
+# $ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_ARM64 --api=21 --arch=arm64
+# $ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++ --install-dir=/usr/$ANDROID_CHAIN_ARM64 --api=28 --arch=arm64
 
 
 echo BUILD DEPS
 pushd $DEP_DIR
 rm -rf asio* lz4* mbedtls* #lzo* boost* minicrypto openssl* polarssl* snappy*
+echo "******* MBEDTLS"
+echo $O3
+TARGETS=android-a8a $O3/core/scripts/android/build-mbedtls
 echo "******* ASIO"
 $O3/core/deps/asio/build-asio
-echo "******* MBEDTLS"
-TARGETS=android-a8a $O3/core/scripts/android/build-mbedtls
 echo "******* LZ4"
 TARGETS=android-a8a $O3/core/scripts/android/build-lz4
 popd

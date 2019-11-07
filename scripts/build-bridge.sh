@@ -2,9 +2,10 @@
 set -e
 . /go-src-root/scripts/helpers.sh
 
+mkdir -p /go-src-root/build
 cd /go-src-root/build
-rm -rf core
-fetch_openvpn3
+#rm -rf core
+#fetch_openvpn3
 
 rm -rf /go-src-root/openvpn3/bridge/*.a /go-src-root/openvpn3/bridge/*.h
 cp -f core/adapter/*.h /go-src-root/openvpn3/bridge/.
@@ -19,13 +20,14 @@ echo "Deps are in: $DEP_DIR"
 echo "DLs go to: $DL"
 echo "O3 is: $O3"
 
-/go-src-root/scripts/x-compile-linux.sh
-/go-src-root/scripts/x-compile-mac.sh
-/go-src-root/scripts/x-compile-windows.sh
-/go-src-root/scripts/x-compile-ios.sh
-/go-src-root/scripts/x-compile-android-arm64.sh
-/go-src-root/scripts/x-compile-android-armeabi-v7a.sh
-/go-src-root/scripts/x-compile-android-x86.sh
+# /go-src-root/scripts/x-compile-linux.sh
+# /go-src-root/scripts/x-compile-mac.sh
+# /go-src-root/scripts/x-compile-windows.sh
+# /go-src-root/scripts/x-compile-ios.sh
+#/go-src-root/scripts/x-compile-android-arm64.sh
+#/go-src-root/scripts/x-compile-android-armeabi-v7a.sh
+#/go-src-root/scripts/x-compile-android-x86.sh
 /go-src-root/scripts/x-compile-android-amd64.sh
 
+# def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4, "amd64": 5]
 

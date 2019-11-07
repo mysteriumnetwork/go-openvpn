@@ -9,7 +9,7 @@ echo "Building for: $PLATFORM"
 
 echo "Bootstrapping Android NDK"
 
-$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_ARM --api=16 --arch=arm
+#$ANDROID_NDK_ROOT/build/tools/make_standalone_toolchain.py --install-dir=/usr/$ANDROID_CHAIN_ARM --api=16 --arch=arm
 
 
 echo BUILD DEPS

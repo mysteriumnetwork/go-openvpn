@@ -12,4 +12,4 @@ docker run -it --rm \
     -v $PWD:/go/src/github.com/mysteriumnetwork/go-openvpn \
     -w /go/src/github.com/mysteriumnetwork/go-openvpn \
     --entrypoint "/bin/bash" \
-    mysteriumnetwork/xgo:1.11 -c "${COMMAND}"
+    mysteriumnetwork/xgo:1.13.1 -c "${COMMAND}"

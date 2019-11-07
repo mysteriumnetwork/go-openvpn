@@ -56,3 +56,7 @@ scripts/xgo_run.sh make test
 ```bash
 ./gomobile_ios.sh -o build/Openvpn3.framework
 ```
+
+```bash
+scripts/xgo_run.sh gomobile_android.sh -o build/Openvpn3.aar
+```
