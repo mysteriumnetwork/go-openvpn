@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -e
+if [ -z "$O3" ]; then
+    echo O3 var must point to ovpn3 tree
+    exit 1
+fi
+if [ -z "$DEP_DIR" ]; then
+    echo DEP_DIR var must point to dependency build folder
+    exit 1
+fi
+if [ -z "$DL" ]; then
+    echo DL var must point to the download folder
+    exit 1
+fi
+
+. $O3/core/deps/lib-versions
+
+# source helper functions
+. $O3/core/deps/functions.sh
+
+PACKAGE=${TAP_VERSION}
+FNAME=${TAP_VERSION}.zip
+URL=https://github.com/OpenVPN/tap-windows6/archive/${TAP_VERSION}.zip
+CSUM=${TAP_CSUM}
+DIST=tap-windows
+
+download
+
+if [ "$NO_WIPE" = "1" ]; then
+    echo RETAIN existing source
+else
+    echo WIPE and reunzip source
+    cd $DEP_DIR
+    rm -rf $DIST tap-windows6-$TAP_VERSION
+    unzip $DL/$FNAME
+
+    mv tap-windows6-$TAP_VERSION $DIST
+fi

@@ -1,0 +1,23 @@
+TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+ARCH=aarch64
+export CC=$TOOLCHAIN/bin/$ARCH-linux-android21-clang
+export CXX=$TOOLCHAIN/bin/$ARCH-linux-android21-clang++
+export AR=$TOOLCHAIN/bin/$ARCH-linux-android-ar
+export AS=$TOOLCHAIN/bin/$ARCH-linux-android-as
+export LD=$TOOLCHAIN/bin/$ARCH-linux-android-ld
+export RANLIB=$TOOLCHAIN/bin/$ARCH-linux-android-ranlib
+export STRIP=$TOOLCHAIN/bin/$ARCH-linux-android-strip
+
+[ -z "$DEP_DIR" ] && export DEP_DIR=$HOME/src/android
+export PLATFORM=android-a8a
+export ABI=arm64-v8a
+export DEBUG_BUILD=0
+export OTHER_COMPILER_FLAGS=""
+export CXX_COMPILER_FLAGS="-std=c++1y"
+export LIB_OPT_LEVEL="-O3"
+export LIB_FPIC="-fPIC"
+export PLATFORM_FLAGS="-D__ANDROID_API__=21 -march=armv8-a -fomit-frame-pointer"
+export GPP_CMD="$CXX"
+export GCC_CMD="$CC"
+export AR_CMD="$AR"
+export RANLIB_CMD="$RANLIB"

@@ -1,0 +1,69 @@
+NDK=android-ndk-r20b SKD=28
+gomobile: /usr/local/go/bin/go build -buildmode=c-shared -o=/tmp/gomobile-work-798798311/android/src/main/jniLibs/x86/libgojni.so gobind failed: exit status 2
+# github.com/mysteriumnetwork/go-openvpn/openvpn3
+openvpn3/bridge/libopenvpn3_android_x86.a(ctr_drbg.o):ctr_drbg.c:function mbedtls_ctr_drbg_write_seed_file: error: undefined reference to 'fwrite_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(ctr_drbg.o):ctr_drbg.c:function mbedtls_ctr_drbg_update_seed_file: error: undefined reference to 'fread_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(ctr_drbg.o):ctr_drbg.c:function mbedtls_ctr_drbg_update_seed_file: error: undefined reference to 'fwrite_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(dhm.o):dhm.c:function mbedtls_dhm_parse_dhmfile: error: undefined reference to 'fread_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(entropy_poll.o):entropy_poll.c:function mbedtls_platform_entropy_poll: error: undefined reference to 'fread_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(md.o):md.c:function mbedtls_md_file: error: undefined reference to 'fread_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function mbedtls_rsa_self_test: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function myrand: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_set_alarm: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function sighandler: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_timing_self_test: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(hmac_drbg.o):hmac_drbg.c:function mbedtls_hmac_drbg_write_seed_file: error: undefined reference to 'fwrite_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(hmac_drbg.o):hmac_drbg.c:function mbedtls_hmac_drbg_update_seed_file: error: undefined reference to 'fwrite_unlocked'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function openvpn::ClientAPI::OpenVPNClient::connect(): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::system_category::message(int) const: error: undefined reference to '__gnu_strerror_r'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::epoll_reactor::do_epoll_create(): error: undefined reference to 'epoll_create1'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::scheduler::scheduler(asio::execution_context&, int, bool): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::posix_event::posix_event(): error: undefined reference to 'pthread_condattr_setclock'
+
+
+NDK=android-ndk-r20b SKD=21
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function mbedtls_rsa_self_test: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function myrand: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_set_alarm: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function sighandler: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_timing_self_test: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function openvpn::ClientAPI::OpenVPNClient::connect(): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::epoll_reactor::do_epoll_create(): error: undefined reference to 'epoll_create1'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::scheduler::scheduler(asio::execution_context&, int, bool): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::posix_event::posix_event(): error: undefined reference to 'pthread_condattr_setclock'
+
+
+
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function mbedtls_rsa_self_test: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(rsa.o):rsa.c:function myrand: error: undefined reference to 'rand'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_set_alarm: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function sighandler: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(timing.o):timing.c:function mbedtls_timing_self_test: error: undefined reference to 'signal'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function openvpn::ClientAPI::OpenVPNClient::connect(): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::epoll_reactor::do_epoll_create(): error: undefined reference to 'epoll_create1'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::scheduler::scheduler(asio::execution_context&, int, bool): error: undefined reference to 'sigfillset'
+openvpn3/bridge/libopenvpn3_android_x86.a(library.o):library.cpp:function asio::detail::posix_event::posix_event(): error: undefined reference to 'pthread_condattr_setclock'
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+# github.com/mysteriumnetwork/go-openvpn/openvpn3
+Android (5220042 based on r346389c) clang version 8.0.7 (https://android.googlesource.com/toolchain/clang b55f2d4ebfd35bf643d27dbca1bb228957008617) (https://android.googlesource.com/toolchain/llvm 3c393fe7a7e13b0fba4ac75a01aa683d7a5b11cd) (based on LLVM 8.0.7svn)
+Target: i686-unknown-linux-android16
+Thread model: posix
+InstalledDir: /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin
+Found candidate GCC installation: /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../lib/gcc/i686-linux-android/4.9.x
+Found candidate GCC installation: /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../lib/gcc/x86_64-linux-android/4.9.x
+Selected GCC installation: /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../lib/gcc/i686-linux-android/4.9.x
+Candidate multilib: .;@m32
+Selected multilib: .;@m32
+ "/usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++" -cc1 -triple i686-unknown-linux-android16 -emit-obj -mrelax-all -disable-free -disable-llvm-verifier -discard-value-names -main-file-name dummy.cpp -mrelocation-model pic -pic-level 2 -mthread-model posix -mdisable-fp-elim -masm-verbose -mconstructor-aliases -fuse-init-array -target-cpu i686 -target-feature +ssse3 -dwarf-column-info -debugger-tuning=gdb -v -coverage-notes-file $WORK/b031/_x008.gcno -resource-dir /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/8.0.7 -I openvpn3 -I $WORK/b031/ -internal-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1 -internal-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/local/include -internal-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/8.0.7/include -internal-externc-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/i686-linux-android -internal-externc-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/include -internal-externc-isystem /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include -fdeprecated-macro -fdebug-compilation-dir openvpn3 -fdebug-prefix-map=/tmp/go-build553099757/b031=/tmp/go-build -ferror-limit 19 -fmessage-length 0 -pthread -mstackrealign -fobjc-runtime=gcc -fcxx-exceptions -fexceptions -fno-caret-diagnostics -fdiagnostics-show-option -o $WORK/b031/_x008.o -x c++ dummy.cpp
+clang -cc1 version 8.0.7 based upon LLVM 8.0.7svn default target x86_64-unknown-linux-gnu
+ignoring nonexistent directory "/usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ openvpn3
+ $WORK/b031
+ /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/c++/v1
+ /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/local/include
+ /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang/8.0.7/include
+ /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include/i686-linux-android
+ /usr/local/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/../sysroot/usr/include
+End of search list.
