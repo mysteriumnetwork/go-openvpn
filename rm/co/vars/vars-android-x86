@@ -1,7 +1,7 @@
 TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
 ARCH=i686
-export CC=$TOOLCHAIN/bin/$ARCH-linux-android28-clang
-export CXX=$TOOLCHAIN/bin/$ARCH-linux-android28-clang++
+export CC=$TOOLCHAIN/bin/$ARCH-linux-android16-clang
+export CXX=$TOOLCHAIN/bin/$ARCH-linux-android16-clang++
 export AR=$TOOLCHAIN/bin/$ARCH-linux-android-ar
 export AS=$TOOLCHAIN/bin/$ARCH-linux-android-as
 export LD=$TOOLCHAIN/bin/$ARCH-linux-android-ld
@@ -16,7 +16,8 @@ export OTHER_COMPILER_FLAGS=""
 export CXX_COMPILER_FLAGS="-std=c++1y"
 export LIB_OPT_LEVEL="-O3"
 export LIB_FPIC="-fPIC"
-export PLATFORM_FLAGS="-D__LP32__ -fomit-frame-pointer"
+export TC=/usr/$ANDROID_CHAIN_386
+export PLATFORM_FLAGS="-D__LP32__ -D__ANDROID_API__=16 -march=i686 -fomit-frame-pointer"
 export GPP_CMD="$CXX"
 export GCC_CMD="$CC"
 export AR_CMD="$AR"

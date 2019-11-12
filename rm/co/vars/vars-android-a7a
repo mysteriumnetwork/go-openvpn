@@ -1,18 +1,25 @@
+TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+ARCH=armv7a
+export CC=$TOOLCHAIN/bin/$ARCH-linux-androideabi16-clang
+export CXX=$TOOLCHAIN/bin/$ARCH-linux-androideabi16-clang++
+export AR=$TOOLCHAIN/bin/arm-linux-androideabi-ar
+export AS=$TOOLCHAIN/bin/arm-linux-androideabi-as
+export LD=$TOOLCHAIN/bin/arm-linux-androideabi-ld
+export RANLIB=$TOOLCHAIN/bin/arm-linux-androideabi-ranlib
+export STRIP=$TOOLCHAIN/bin/arm-linux-androideabi-strip
+
 [ -z "$DEP_DIR" ] && export DEP_DIR=$HOME/src/android
 export PLATFORM=android-a7a
 export ABI=armeabi-v7a
 export DEBUG_BUILD=0
-export OTHER_COMPILER_FLAGS=""
+export OTHER_COMPILER_FLAGS="-fuse-ld=lld"
 export CXX_COMPILER_FLAGS="-std=c++1y"
 export LIB_OPT_LEVEL="-O3"
 export LIB_FPIC="-fPIC"
 export TC=/usr/$ANDROID_CHAIN_ARM
-export PLATFORM_FLAGS="-D__LP32__ -D__ANDROID_API__=28 -march=armv7-a -mthumb -fomit-frame-pointer"
-export GPP_CMD="armv7a-linux-androideabi28-clang++"
-export GCC_CMD="armv7a-linux-androideabi28-clang"
-export AR_CMD=arm-linux-androideabi-ar
-export RANLIB_CMD=arm-linux-androideabi-ranlib
+export PLATFORM_FLAGS="-mthumb -fomit-frame-pointer"
+export GPP_CMD="$CXX"
+export GCC_CMD="$CC"
+export AR_CMD="$AR"
+export RANLIB_CMD="$RANLIB"
 
-
-[ -z "$VARS_SAVE_PATH" ] && VARS_SAVE_PATH="$PATH"
-export PATH="$TC/bin:$TC/arm-linux-androideabi/bin:$VARS_SAVE_PATH"

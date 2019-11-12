@@ -1,3 +1,13 @@
+TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+ARCH=x86_64
+export CC=$TOOLCHAIN/bin/$ARCH-linux-android21-clang
+export CXX=$TOOLCHAIN/bin/$ARCH-linux-android21-clang++
+export AR=$TOOLCHAIN/bin/$ARCH-linux-android-ar
+export AS=$TOOLCHAIN/bin/$ARCH-linux-android-as
+export LD=$TOOLCHAIN/bin/$ARCH-linux-android-ld
+export RANLIB=$TOOLCHAIN/bin/$ARCH-linux-android-ranlib
+export STRIP=$TOOLCHAIN/bin/$ARCH-linux-android-strip
+
 [ -z "$DEP_DIR" ] && export DEP_DIR=$HOME/src/android
 export PLATFORM=android-amd64
 export ABI=x86_64
@@ -6,14 +16,9 @@ export OTHER_COMPILER_FLAGS=""
 export CXX_COMPILER_FLAGS="-std=c++1y"
 export LIB_OPT_LEVEL="-O3"
 export LIB_FPIC="-fPIC"
-export TC=/usr/$ANDROID_CHAIN_AMD64
-export PLATFORM_FLAGS="-D__ANDROID_API__=21 -fomit-frame-pointer"
-export GPP_CMD="x86_64-linux-android28-clang++"
-export GCC_CMD="x86_64-linux-android28-clang"
+export PLATFORM_FLAGS="-fomit-frame-pointer"
+export GPP_CMD="$CXX"
+export GCC_CMD="$CC"
+export AR_CMD="$AR"
+export RANLIB_CMD="$RANLIB"
 
-export AR_CMD="x86_64-linux-android-ar"
-export RANLIB_CMD="x86_64-linux-android-ranlib"
-
-
-[ -z "$VARS_SAVE_PATH" ] && VARS_SAVE_PATH="$PATH"
-export PATH="$TC/bin:$TC/i686-linux-android/bin:$VARS_SAVE_PATH"
