@@ -18,38 +18,44 @@
 package auth
 
 import (
+	"bytes"
+	"html/template"
 	"strings"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 )
 
-const filterLANTemplate = `client-pf %d
+const filterLANTemplate = `client-pf {{.ClientID}}
  [CLIENTS DROP]
  [SUBNETS ACCEPT]
- -10.0.0.0/8
- -172.16.0.0/12
- -192.168.0.0/16
+ {{- range $subnet := .Subnets}}
+ -{{$subnet}}
+ {{- end}}
  [END]
  END
  `
+
+var filterLAN = template.Must(template.New("filter_lan").Parse(filterLANTemplate))
 
 type middleware struct {
 	// TODO: consider implementing event channel to communicate required callbacks
 	credentialsValidator CredentialsValidator
 	commandWriter        management.CommandWriter
 	currentEvent         clientEvent
+	filter               []string
 }
 
 // CredentialsValidator callback checks given auth primitives (i.e. customer identity signature / node's sessionId)
 type CredentialsValidator func(clientID int, username, password string) (bool, error)
 
 // NewMiddleware creates server user_auth challenge authentication middleware
-func NewMiddleware(credentialsValidator CredentialsValidator) *middleware {
+func NewMiddleware(credentialsValidator CredentialsValidator, filter ...string) *middleware {
 	return &middleware{
 		credentialsValidator: credentialsValidator,
 		commandWriter:        nil,
 		currentEvent:         undefinedEvent,
+		filter:               filter,
 	}
 }
 
@@ -172,7 +178,6 @@ func (m *middleware) handleClientEvent(event clientEvent) {
 }
 
 func (m *middleware) authenticateClient(clientID, clientKey int, username, password string) error {
-
 	if username == "" || password == "" {
 		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "missing username or password")
 	}
@@ -186,21 +191,37 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 	}
 
 	if authenticated {
+		if err := filterSubnets(m.commandWriter, clientID, m.filter); err != nil {
+			return err
+		}
+
 		return approveClient(m.commandWriter, clientID, clientKey)
 	}
+
 	return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "wrong username or password")
 }
 
 func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
-	if _, err := commandWriter.SingleLineCommand(filterLANTemplate, clientID); err != nil {
-		return err
-	}
-
 	_, err := commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
 	return err
 }
 
 func denyClientAuthWithMessage(commandWriter management.CommandWriter, clientID, keyID int, message string) error {
 	_, err := commandWriter.SingleLineCommand("client-deny %d %d %s", clientID, keyID, message)
+	return err
+}
+
+func filterSubnets(commandWriter management.CommandWriter, clientID int, subnets []string) error {
+	data := struct {
+		ClientID int
+		Subnets  []string
+	}{ClientID: clientID, Subnets: subnets}
+
+	var tpl bytes.Buffer
+	if err := filterLAN.Execute(&tpl, data); err != nil {
+		return err
+	}
+
+	_, err := commandWriter.SingleLineCommand(tpl.String())
 	return err
 }
