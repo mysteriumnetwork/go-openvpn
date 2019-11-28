@@ -18,72 +18,30 @@
 package auth
 
 import (
-	"bytes"
-	"html/template"
 	"strings"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 )
-
-const filterLANTemplate = `client-pf {{.ClientID}}
- [CLIENTS DROP]
- [SUBNETS ACCEPT]
- {{- range $subnet := .Subnets}}
- -{{$subnet}}
- {{- end}}
- [END]
- END
- `
-
-var filterLAN = template.Must(template.New("filter_lan").Parse(filterLANTemplate))
 
 type middleware struct {
 	// TODO: consider implementing event channel to communicate required callbacks
 	credentialsValidator CredentialsValidator
 	commandWriter        management.CommandWriter
-	currentEvent         clientEvent
-	filter               []string
+	currentEvent         server.ClientEvent
 }
 
 // CredentialsValidator callback checks given auth primitives (i.e. customer identity signature / node's sessionId)
 type CredentialsValidator func(clientID int, username, password string) (bool, error)
 
 // NewMiddleware creates server user_auth challenge authentication middleware
-func NewMiddleware(credentialsValidator CredentialsValidator, filter ...string) *middleware {
+func NewMiddleware(credentialsValidator CredentialsValidator) *middleware {
 	return &middleware{
 		credentialsValidator: credentialsValidator,
 		commandWriter:        nil,
-		currentEvent:         undefinedEvent,
-		filter:               filter,
+		currentEvent:         server.UndefinedEvent,
 	}
-}
-
-type clientEventType string
-
-const (
-	connect     = clientEventType("CONNECT")
-	reauth      = clientEventType("REAUTH")
-	established = clientEventType("ESTABLISHED")
-	disconnect  = clientEventType("DISCONNECT")
-	address     = clientEventType("ADDRESS")
-	//pseudo event type ENV - that means some of above defined events are multiline and ENV messages are part of it
-	env = clientEventType("ENV")
-	//constant which means that id of type int is undefined
-	undefined = -1
-)
-
-type clientEvent struct {
-	eventType clientEventType
-	clientID  int
-	clientKey int
-	env       map[string]string
-}
-
-var undefinedEvent = clientEvent{
-	clientID:  undefined,
-	clientKey: undefined,
-	env:       make(map[string]string),
 }
 
 func (m *middleware) Start(commandWriter management.CommandWriter) error {
@@ -102,36 +60,36 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 
 	clientLine := strings.TrimPrefix(line, ">CLIENT:")
 
-	eventType, eventData, err := parseClientEvent(clientLine)
+	eventType, eventData, err := server.ParseClientEvent(clientLine)
 	if err != nil {
 		return true, err
 	}
 
 	switch eventType {
-	case connect, reauth:
-		ID, key, err := parseIDAndKey(eventData)
+	case server.Connect, server.Reauth:
+		ID, key, err := server.ParseIDAndKey(eventData)
 		if err != nil {
 			return true, err
 		}
 		m.startOfEvent(eventType, ID, key)
-	case env:
+	case server.Env:
 		if strings.ToLower(eventData) == "end" {
 			m.endOfEvent()
 			return true, nil
 		}
 
-		key, val, err := parseEnvVar(eventData)
+		key, val, err := server.ParseEnvVar(eventData)
 		if err != nil {
 			return true, err
 		}
 		m.addEnvVar(key, val)
-	case established, disconnect:
-		ID, err := parseID(eventData)
+	case server.Established, server.Disconnect:
+		ID, err := server.ParseID(eventData)
 		if err != nil {
 			return true, err
 		}
-		m.startOfEvent(eventType, ID, undefined)
-	case address:
+		m.startOfEvent(eventType, ID, server.Undefined)
+	case server.Address:
 		log.Info("Address for client:", eventData)
 	default:
 		log.Error("Undefined user notification event:", eventType, eventData)
@@ -140,14 +98,14 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 	return true, nil
 }
 
-func (m *middleware) startOfEvent(eventType clientEventType, clientID int, keyID int) {
-	m.currentEvent.eventType = eventType
-	m.currentEvent.clientID = clientID
-	m.currentEvent.clientKey = keyID
+func (m *middleware) startOfEvent(eventType server.ClientEventType, clientID int, keyID int) {
+	m.currentEvent.EventType = eventType
+	m.currentEvent.ClientID = clientID
+	m.currentEvent.ClientKey = keyID
 }
 
 func (m *middleware) addEnvVar(key string, val string) {
-	m.currentEvent.env[key] = val
+	m.currentEvent.Env[key] = val
 }
 
 func (m *middleware) endOfEvent() {
@@ -156,28 +114,29 @@ func (m *middleware) endOfEvent() {
 }
 
 func (m *middleware) reset() {
-	m.currentEvent = undefinedEvent
+	m.currentEvent = server.UndefinedEvent
 }
 
-func (m *middleware) handleClientEvent(event clientEvent) {
-	switch event.eventType {
-	case connect, reauth:
-		username := event.env["username"]
-		password := event.env["password"]
-		err := m.authenticateClient(event.clientID, event.clientKey, username, password)
+func (m *middleware) handleClientEvent(event server.ClientEvent) {
+	switch event.EventType {
+	case server.Connect, server.Reauth:
+		username := event.Env["username"]
+		password := event.Env["password"]
+		err := m.authenticateClient(event.ClientID, event.ClientKey, username, password)
 		if err != nil {
 			log.Error("Unable to authenticate client:", err)
 		}
-	case established:
-		log.Info("Client with ID:", event.clientID, "connection established successfully")
-	case disconnect:
-		log.Info("Client with ID:", event.clientID, "disconnected")
+	case server.Established:
+		log.Info("Client with ID:", event.ClientID, "connection established successfully")
+	case server.Disconnect:
+		log.Info("Client with ID:", event.ClientID, "disconnected")
 		// NOTE: do not cleanup session after disconnect event risen by transport itself
 		//  cleanup session only by user's intent
 	}
 }
 
 func (m *middleware) authenticateClient(clientID, clientKey int, username, password string) error {
+
 	if username == "" || password == "" {
 		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "missing username or password")
 	}
@@ -191,13 +150,8 @@ func (m *middleware) authenticateClient(clientID, clientKey int, username, passw
 	}
 
 	if authenticated {
-		if err := filterSubnets(m.commandWriter, clientID, m.filter); err != nil {
-			return err
-		}
-
 		return approveClient(m.commandWriter, clientID, clientKey)
 	}
-
 	return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "wrong username or password")
 }
 
@@ -208,20 +162,5 @@ func approveClient(commandWriter management.CommandWriter, clientID, keyID int) 
 
 func denyClientAuthWithMessage(commandWriter management.CommandWriter, clientID, keyID int, message string) error {
 	_, err := commandWriter.SingleLineCommand("client-deny %d %d %s", clientID, keyID, message)
-	return err
-}
-
-func filterSubnets(commandWriter management.CommandWriter, clientID int, subnets []string) error {
-	data := struct {
-		ClientID int
-		Subnets  []string
-	}{ClientID: clientID, Subnets: subnets}
-
-	var tpl bytes.Buffer
-	if err := filterLAN.Execute(&tpl, data); err != nil {
-		return err
-	}
-
-	_, err := commandWriter.SingleLineCommand(tpl.String())
 	return err
 }
