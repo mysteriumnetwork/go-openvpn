@@ -51,3 +51,10 @@ func (l stdLogger) Debug(args ...interface{}) {
 	msg = append(msg, args...)
 	log.Println(msg...)
 }
+
+func (l stdLogger) Trace(args ...interface{}) {
+	var msg []interface{}
+	msg = append(msg, "TRACE")
+	msg = append(msg, args...)
+	log.Println(msg...)
+}

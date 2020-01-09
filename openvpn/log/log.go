@@ -24,6 +24,7 @@ type Logger interface {
 	Warn(args ...interface{})
 	Info(args ...interface{})
 	Debug(args ...interface{})
+	Trace(args ...interface{})
 }
 
 var logger Logger = stdLogger{}
@@ -56,4 +57,9 @@ func Info(args ...interface{}) {
 // Debug prints debug message.
 func Debug(args ...interface{}) {
 	logger.Debug(args...)
+}
+
+// Trace prints trace message.
+func Trace(args ...interface{}) {
+	logger.Trace(args...)
 }

@@ -201,7 +201,7 @@ func (management *Management) consumeOpenvpnConnectionOutput(input io.Reader, ou
 			close(eventChannel)
 			return
 		}
-		log.Debug(management.logPrefix, "Line received:", line)
+		management.logEvent("Line received:", line)
 
 		output := outputChannel
 		if strings.HasPrefix(line, ">") {
@@ -219,7 +219,7 @@ func (management *Management) consumeOpenvpnConnectionOutput(input io.Reader, ou
 
 func (management *Management) deliverOpenvpnManagementEvents(eventChannel chan string) {
 	for event := range eventChannel {
-		log.Debug(management.logPrefix, "Line delivering:", event)
+		management.logEvent("Line delivering:", event)
 
 		lineConsumed := false
 		for _, middleware := range management.middlewares {
@@ -235,4 +235,15 @@ func (management *Management) deliverOpenvpnManagementEvents(eventChannel chan s
 		}
 	}
 	log.Info(management.logPrefix, "Event consumer is done")
+}
+
+// Change this to slice as needed
+var traceLevelEvents = ">BYTECOUNT"
+
+func (management *Management) logEvent(msg, event string) {
+	if strings.HasPrefix(event, traceLevelEvents) {
+		log.Trace(management.logPrefix, msg, event)
+	} else {
+		log.Debug(management.logPrefix, msg, event)
+	}
 }
