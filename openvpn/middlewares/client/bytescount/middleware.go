@@ -30,8 +30,8 @@ type SessionStatsHandler func(Bytecount) error
 
 // Bytecount represents the bytecount response
 type Bytecount struct {
-	BytesIn  int
-	BytesOut int
+	BytesIn  uint64
+	BytesOut uint64
 }
 
 const byteCountCommandTemplate = "bytecount %d"
@@ -67,12 +67,12 @@ func (middleware *middleware) ConsumeLine(line string) (consumed bool, err error
 		return
 	}
 
-	bytesIn, err := strconv.Atoi(match[1])
+	bytesIn, err := strconv.ParseUint(match[1], 10, 64)
 	if err != nil {
 		return
 	}
 
-	bytesOut, err := strconv.Atoi(match[2])
+	bytesOut, err := strconv.ParseUint(match[2], 10, 64)
 	if err != nil {
 		return
 	}

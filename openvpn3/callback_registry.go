@@ -39,8 +39,8 @@ type EventConsumer interface {
 
 // Statistics shows the bytes in/out for openvpn
 type Statistics struct {
-	BytesIn  int
-	BytesOut int
+	BytesIn  uint64
+	BytesOut uint64
 }
 
 // StatsConsumer consumes the bytes/in out statistics

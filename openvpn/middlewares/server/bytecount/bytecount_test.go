@@ -38,8 +38,8 @@ func Test_ConsumesOKLine(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, consumed)
 	assert.Equal(t, 1, statsRecorder.sbc.ClientID)
-	assert.Equal(t, 2, statsRecorder.sbc.BytesIn)
-	assert.Equal(t, 3, statsRecorder.sbc.BytesOut)
+	assert.Equal(t, uint64(2), statsRecorder.sbc.BytesIn)
+	assert.Equal(t, uint64(3), statsRecorder.sbc.BytesOut)
 }
 
 func Test_IgnoresMalformedLines(t *testing.T) {

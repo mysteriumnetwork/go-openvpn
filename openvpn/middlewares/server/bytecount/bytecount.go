@@ -32,7 +32,8 @@ type SessionByteChangeHandler func(SessionByteCount)
 
 // SessionByteCount represents
 type SessionByteCount struct {
-	ClientID, BytesIn, BytesOut int
+	ClientID          int
+	BytesIn, BytesOut uint64
 }
 
 // Middleware reports the different session byte counts
@@ -78,12 +79,12 @@ func (m *Middleware) ConsumeLine(line string) (consumed bool, err error) {
 		return false, fmt.Errorf("could not parse clientID from match[1]: %q", match[1])
 	}
 
-	bytesIn, err := strconv.Atoi(match[2])
+	bytesIn, err := strconv.ParseUint(match[2], 10, 64)
 	if err != nil {
 		return false, fmt.Errorf("could not parse clientID from match[2]: %q", match[2])
 	}
 
-	bytesOut, err := strconv.Atoi(match[3])
+	bytesOut, err := strconv.ParseUint(match[3], 10, 64)
 	if err != nil {
 		return false, fmt.Errorf("could not parse clientID from match[3]: %q", match[3])
 	}

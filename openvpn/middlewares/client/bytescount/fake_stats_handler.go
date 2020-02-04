@@ -18,8 +18,8 @@
 package bytescount
 
 type fakeStatsRecorder struct {
-	BytesIn  int
-	BytesOut int
+	BytesIn  uint64
+	BytesOut uint64
 }
 
 func (sender *fakeStatsRecorder) record(bc Bytecount) error {
