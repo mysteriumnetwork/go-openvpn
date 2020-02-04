@@ -1,45 +1,38 @@
 dist: xenial
 language: go
-go: ["1.11"]
+go: ["1.13"]
 cache:
   directories:
     - vendor
 
 
 stages:
-  - dep-cache
   - test
 
 jobs:
   include:
-    # Dependencies cache stage
-    - stage: dep-cache
-      name: "Dependencies update"
-      script: make deps
-
     # Test stage
     - stage: test
-      script: make test
+      script: go run mage.go Test
       name: "Unit tests"
 
-    - script: make govet
+    - script: go run mage.go CheckGoVet
       name: "Vet check"
 
-    - script: make golint
+    - script: go run mage.go CheckGoVet
       name: "Golint check"
 
-    - script: make copyright
+    - script: go run mage.go CheckGoLint
       name: "Copyright check"
 
-    - script: make goimports
+    - script: go run mage.go CheckGoImports
       name: "Goimports check"
 
     - script:
-      - go get github.com/mysteriumnetwork/xgo
       - ./check-all.sh
       name: "Binaries check"
 
-    - script: make goreport
+    - script: go run mage.go GoReport
       name: "Update goreport"
 
 notifications:
