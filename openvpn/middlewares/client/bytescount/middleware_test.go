@@ -53,8 +53,8 @@ func Test_ConsumeLine(t *testing.T) {
 		line                  string
 		expectedConsumed      bool
 		expectedError         error
-		expectedBytesReceived int
-		expectedBytesSent     int
+		expectedBytesReceived uint64
+		expectedBytesSent     uint64
 	}{
 		{">BYTECOUNT:3018,3264", true, nil, 3018, 3264},
 		{">BYTECOUNT:0,3264", true, nil, 0, 3264},

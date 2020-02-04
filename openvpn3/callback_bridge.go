@@ -37,8 +37,8 @@ var callbacks = newCallbackRegistry()
 func goStatsCallback(ptr C.user_callback_data, cStats C.conn_stats) {
 	id := int(ptr)
 	var stats Statistics
-	stats.BytesIn = int(cStats.bytes_in)
-	stats.BytesOut = int(cStats.bytes_out)
+	stats.BytesIn = uint64(cStats.bytes_in)
+	stats.BytesOut = uint64(cStats.bytes_out)
 	callbacks.stats(id, stats)
 }
 
