@@ -120,6 +120,7 @@ func (cw *CmdWrapper) outputToLog(output io.ReadCloser, streamPrefix string) {
 func (cw *CmdWrapper) waitForExit(cmd *exec.Cmd) {
 	err := cmd.Wait()
 	cw.CmdExitError <- err
+	close(cw.CmdExitError)
 }
 
 func (cw *CmdWrapper) waitForShutdown(cmd *exec.Cmd) {
@@ -129,4 +130,7 @@ func (cw *CmdWrapper) waitForShutdown(cmd *exec.Cmd) {
 	if err := cmd.Process.Signal(exitSignal); err != nil {
 		log.Error(cw.logPrefix, "Error killing cw:", err)
 	}
+
+	// Wait for command to quit
+	<-cw.CmdExitError
 }
