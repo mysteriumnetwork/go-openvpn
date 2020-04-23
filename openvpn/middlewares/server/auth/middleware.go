@@ -19,41 +19,89 @@ package auth
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 )
 
-type middleware struct {
-	// TODO: consider implementing event channel to communicate required callbacks
-	credentialsValidator CredentialsValidator
-	commandWriter        management.CommandWriter
-	currentEvent         server.ClientEvent
+// ClientEventCallback is called when state of each Openvp client changes.
+type ClientEventCallback func(event server.ClientEvent)
+
+// Middleware is able to process client auth events, exposes client control API.
+//
+// The OpenVPN server should have been started with the
+// --management-client-auth directive so that it will ask the management
+// interface to approve client connections.
+type Middleware struct {
+	commandWriter management.CommandWriter
+	currentEvent  server.ClientEvent
+
+	listenersMu sync.RWMutex
+	listeners   []ClientEventCallback
 }
 
-// CredentialsValidator callback checks given auth primitives (i.e. customer identity signature / node's sessionId)
-type CredentialsValidator func(clientID int, username, password string) (bool, error)
-
-// NewMiddleware creates server user_auth challenge authentication middleware
-func NewMiddleware(credentialsValidator CredentialsValidator) *middleware {
-	return &middleware{
-		credentialsValidator: credentialsValidator,
-		commandWriter:        nil,
-		currentEvent:         server.UndefinedEvent,
+// NewMiddleware creates new instance of Middleware.
+func NewMiddleware(listeners ...ClientEventCallback) *Middleware {
+	return &Middleware{
+		commandWriter: nil,
+		currentEvent:  server.UndefinedEvent(),
+		listeners:     listeners,
 	}
 }
 
-func (m *middleware) Start(commandWriter management.CommandWriter) error {
+// ClientsSubscribe subscribes to Openvpn clients states.
+func (m *Middleware) ClientsSubscribe(callback ClientEventCallback) {
+	m.listenersMu.Lock()
+	defer m.listenersMu.Unlock()
+
+	m.listeners = append(m.listeners, callback)
+}
+
+// ClientAccept client control which allows authorisation (for CONNECT or REAUTH state).
+func (m *Middleware) ClientAccept(clientID, keyID int) error {
+	_, err := m.commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
+	return err
+}
+
+// ClientDeny client control which forbids authorisation (for CONNECT or REAUTH state).
+func (m *Middleware) ClientDeny(clientID, keyID int, message string) error {
+	_, err := m.commandWriter.SingleLineCommand("client-deny %d %d", clientID, keyID, message)
+	return err
+}
+
+// ClientDenyWithMessage client control which forbids authorisation with reason message (for CONNECT or REAUTH state).
+func (m *Middleware) ClientDenyWithMessage(clientID, keyID int, message string) error {
+	_, err := m.commandWriter.SingleLineCommand("client-deny %d %d %s", clientID, keyID, message)
+	return err
+}
+
+// ClientKill client control which stops established connection (for ESTABLISHED state).
+func (m *Middleware) ClientKill(clientID int) error {
+	_, err := m.commandWriter.SingleLineCommand("client-kill %d", clientID)
+	return err
+}
+
+// ClientKillWithMessage client control which stops established connection with reason message (for ESTABLISHED state).
+func (m *Middleware) ClientKillWithMessage(clientID int, message string) error {
+	_, err := m.commandWriter.SingleLineCommand("client-kill %d %s", clientID, message)
+	return err
+}
+
+// Start starts the middleware.
+func (m *Middleware) Start(commandWriter management.CommandWriter) error {
 	m.commandWriter = commandWriter
 	return nil
 }
 
-func (m *middleware) Stop(commandWriter management.CommandWriter) error {
+// Stop stops the middleware.
+func (m *Middleware) Stop(_ management.CommandWriter) error {
 	return nil
 }
 
-func (m *middleware) ConsumeLine(line string) (bool, error) {
+// ConsumeLine handles the given openvpn management line.
+func (m *Middleware) ConsumeLine(line string) (bool, error) {
 	if !strings.HasPrefix(line, ">CLIENT:") {
 		return false, nil
 	}
@@ -98,69 +146,29 @@ func (m *middleware) ConsumeLine(line string) (bool, error) {
 	return true, nil
 }
 
-func (m *middleware) startOfEvent(eventType server.ClientEventType, clientID int, keyID int) {
+func (m *Middleware) startOfEvent(eventType server.ClientEventType, clientID int, keyID int) {
 	m.currentEvent.EventType = eventType
 	m.currentEvent.ClientID = clientID
 	m.currentEvent.ClientKey = keyID
 }
 
-func (m *middleware) addEnvVar(key string, val string) {
+func (m *Middleware) addEnvVar(key string, val string) {
 	m.currentEvent.Env[key] = val
 }
 
-func (m *middleware) endOfEvent() {
-	m.handleClientEvent(m.currentEvent)
+func (m *Middleware) endOfEvent() {
+	m.listenersMu.RLock()
+	defer m.listenersMu.RUnlock()
+
+	if m.listeners != nil {
+		for _, subscription := range m.listeners {
+			subscription(m.currentEvent)
+		}
+	}
+
 	m.reset()
 }
 
-func (m *middleware) reset() {
-	m.currentEvent = server.UndefinedEvent
-}
-
-func (m *middleware) handleClientEvent(event server.ClientEvent) {
-	switch event.EventType {
-	case server.Connect, server.Reauth:
-		username := event.Env["username"]
-		password := event.Env["password"]
-		err := m.authenticateClient(event.ClientID, event.ClientKey, username, password)
-		if err != nil {
-			log.Error("Unable to authenticate client:", err)
-		}
-	case server.Established:
-		log.Info("Client with ID:", event.ClientID, "connection established successfully")
-	case server.Disconnect:
-		log.Info("Client with ID:", event.ClientID, "disconnected")
-		// NOTE: do not cleanup session after disconnect event risen by transport itself
-		//  cleanup session only by user's intent
-	}
-}
-
-func (m *middleware) authenticateClient(clientID, clientKey int, username, password string) error {
-
-	if username == "" || password == "" {
-		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "missing username or password")
-	}
-
-	log.Info("Authenticating user:", username, "clientID:", clientID, "clientKey:", clientKey)
-
-	authenticated, err := m.credentialsValidator(clientID, username, password)
-	if err != nil {
-		log.Error("Authentication error:", err)
-		return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "internal error")
-	}
-
-	if authenticated {
-		return approveClient(m.commandWriter, clientID, clientKey)
-	}
-	return denyClientAuthWithMessage(m.commandWriter, clientID, clientKey, "wrong username or password")
-}
-
-func approveClient(commandWriter management.CommandWriter, clientID, keyID int) error {
-	_, err := commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
-	return err
-}
-
-func denyClientAuthWithMessage(commandWriter management.CommandWriter, clientID, keyID int, message string) error {
-	_, err := commandWriter.SingleLineCommand("client-deny %d %d %s", clientID, keyID, message)
-	return err
+func (m *Middleware) reset() {
+	m.currentEvent = server.UndefinedEvent()
 }
