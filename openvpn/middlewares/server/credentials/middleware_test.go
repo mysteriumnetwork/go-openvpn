@@ -22,7 +22,6 @@ import (
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
-	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server/auth"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,12 +32,6 @@ type fakeValidator struct {
 func (f *fakeValidator) authenticateClient(clientID int, username, password string) (bool, error) {
 	f.called = true
 	return username == "username1" && password == "12341234", nil
-}
-
-func mockAuthMiddleware(connection *management.MockConnection) *auth.Middleware {
-	m := auth.NewMiddleware()
-	m.Start(connection)
-	return m
 }
 
 func Test_Factory(t *testing.T) {

@@ -58,12 +58,10 @@ type middleware struct {
 
 // NewMiddleware creates new instance of middleware
 func NewMiddleware(allow, block []string) *middleware {
-	m := &middleware{
-		commandWriter: nil,
-		allow:         allow,
-		block:         block,
-	}
+	m := new(middleware)
 	m.Middleware = auth.NewMiddleware(m.handleClientEvent)
+	m.allow = allow
+	m.block = block
 	return m
 }
 

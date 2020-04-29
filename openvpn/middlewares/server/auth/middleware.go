@@ -26,10 +26,10 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 )
 
-// ClientEventCallback is called when state of each Openvp client changes.
+// ClientEventCallback is called when state of each OpenVPN client changes.
 type ClientEventCallback func(event server.ClientEvent)
 
-// Middleware is able to process client auth events, exposes client control API.
+// Middleware is able to subscribe to client status events, exposes client control API.
 //
 // The OpenVPN server should have been started with the
 // --management-client-auth directive so that it will ask the management
@@ -45,9 +45,8 @@ type Middleware struct {
 // NewMiddleware creates new instance of Middleware.
 func NewMiddleware(listeners ...ClientEventCallback) *Middleware {
 	return &Middleware{
-		commandWriter: nil,
-		currentEvent:  server.UndefinedEvent(),
-		listeners:     listeners,
+		currentEvent: server.UndefinedEvent(),
+		listeners:    listeners,
 	}
 }
 
@@ -59,31 +58,31 @@ func (m *Middleware) ClientsSubscribe(callback ClientEventCallback) {
 	m.listeners = append(m.listeners, callback)
 }
 
-// ClientAccept client control which allows authorisation (for CONNECT or REAUTH state).
+// ClientAccept is a client control which allows authorization (for CONNECT or REAUTH state).
 func (m *Middleware) ClientAccept(clientID, keyID int) error {
 	_, err := m.commandWriter.SingleLineCommand("client-auth-nt %d %d", clientID, keyID)
 	return err
 }
 
-// ClientDeny client control which forbids authorisation (for CONNECT or REAUTH state).
+// ClientDeny is a client control which forbids authorization (for CONNECT or REAUTH state).
 func (m *Middleware) ClientDeny(clientID, keyID int, message string) error {
 	_, err := m.commandWriter.SingleLineCommand("client-deny %d %d", clientID, keyID, message)
 	return err
 }
 
-// ClientDenyWithMessage client control which forbids authorisation with reason message (for CONNECT or REAUTH state).
+// ClientDenyWithMessage is a client control which forbids authorization with reason message (for CONNECT or REAUTH state).
 func (m *Middleware) ClientDenyWithMessage(clientID, keyID int, message string) error {
 	_, err := m.commandWriter.SingleLineCommand("client-deny %d %d %s", clientID, keyID, message)
 	return err
 }
 
-// ClientKill client control which stops established connection (for ESTABLISHED state).
+// ClientKill is a client control which stops established connection (for ESTABLISHED state).
 func (m *Middleware) ClientKill(clientID int) error {
 	_, err := m.commandWriter.SingleLineCommand("client-kill %d", clientID)
 	return err
 }
 
-// ClientKillWithMessage client control which stops established connection with reason message (for ESTABLISHED state).
+// ClientKillWithMessage is a client control which stops established connection with reason message (for ESTABLISHED state).
 func (m *Middleware) ClientKillWithMessage(clientID int, message string) error {
 	_, err := m.commandWriter.SingleLineCommand("client-kill %d %s", clientID, message)
 	return err
@@ -160,12 +159,9 @@ func (m *Middleware) endOfEvent() {
 	m.listenersMu.RLock()
 	defer m.listenersMu.RUnlock()
 
-	if m.listeners != nil {
-		for _, subscription := range m.listeners {
-			subscription(m.currentEvent)
-		}
+	for _, subscription := range m.listeners {
+		subscription(m.currentEvent)
 	}
-
 	m.reset()
 }
 

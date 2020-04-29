@@ -23,7 +23,7 @@ import (
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server/auth"
 )
 
-// Middleware is able to process authorize incoming clients by given credentials validator callback.
+// Middleware is able to authorize incoming clients by given credentials validator callback.
 type Middleware struct {
 	*auth.Middleware
 
@@ -35,10 +35,9 @@ type Validator func(clientID int, username, password string) (bool, error)
 
 // NewMiddleware creates server user_auth challenge authentication Middleware
 func NewMiddleware(validator Validator) *Middleware {
-	m := &Middleware{
-		validator: validator,
-	}
+	m := new(Middleware)
 	m.Middleware = auth.NewMiddleware(m.handleClientEvent)
+	m.validator = validator
 	return m
 }
 
