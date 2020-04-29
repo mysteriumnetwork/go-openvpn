@@ -47,8 +47,11 @@ type ClientEvent struct {
 }
 
 // UndefinedEvent is an empty OpenVPN management client event.
-var UndefinedEvent = ClientEvent{
-	ClientID:  Undefined,
-	ClientKey: Undefined,
-	Env:       make(map[string]string),
+// Note: can't be a var, because `ClientEvent.Env` variable is being overwritten as it's a reference to same memory.
+func UndefinedEvent() ClientEvent {
+	return ClientEvent{
+		ClientID:  Undefined,
+		ClientKey: Undefined,
+		Env:       make(map[string]string),
+	}
 }

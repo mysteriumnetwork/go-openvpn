@@ -21,28 +21,9 @@ import (
 	"testing"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 	"github.com/stretchr/testify/assert"
 )
-
-type fakeAuthenticatorStub struct {
-	called        bool
-	username      string
-	password      string
-	authenticated bool
-}
-
-func (f *fakeAuthenticatorStub) fakeAuthenticator(clientID int, username, password string) (bool, error) {
-	f.called = true
-	f.username = username
-	f.password = password
-	return f.authenticated, nil
-}
-
-func Test_Factory(t *testing.T) {
-	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator)
-	assert.NotNil(t, middleware)
-}
 
 func Test_ConsumeLineSkips(t *testing.T) {
 	var tests = []struct {
@@ -53,8 +34,7 @@ func Test_ConsumeLineSkips(t *testing.T) {
 		{">PASSWORD"},
 		{">USERNAME"},
 	}
-	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator)
+	middleware := NewMiddleware()
 
 	for _, test := range tests {
 		consumed, err := middleware.ConsumeLine(test.line)
@@ -73,8 +53,7 @@ func Test_ConsumeLineTakes(t *testing.T) {
 		{">CLIENT:ENV,username=username"},
 	}
 
-	fas := fakeAuthenticatorStub{}
-	middleware := NewMiddleware(fas.fakeAuthenticator)
+	middleware := NewMiddleware()
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
@@ -85,48 +64,33 @@ func Test_ConsumeLineTakes(t *testing.T) {
 	}
 }
 
-func Test_ConsumeLineAuthState(t *testing.T) {
-	var tests = []struct {
-		line string
-	}{
-		{">CLIENT:REAUTH,0,0"},
-		{">CLIENT:CONNECT,0,0"},
-	}
-
-	for _, test := range tests {
-		fas := fakeAuthenticatorStub{}
-		middleware := NewMiddleware(fas.fakeAuthenticator)
-		mockConnection := &management.MockConnection{}
-		middleware.Start(mockConnection)
-
-		consumed, err := middleware.ConsumeLine(test.line)
-		assert.NoError(t, err, test.line)
-		assert.True(t, consumed, test.line)
-	}
-}
-
-func Test_ConsumeLineNotAuthState(t *testing.T) {
+func Test_ConsumeLineShouldNotTriggerClientState(t *testing.T) {
 	var tests = []struct {
 		line string
 	}{
 		{">CLIENT:ENV,password=12341234"},
 		{">CLIENT:ENV,username=username"},
+		{">CLIENT:REAUTH,0,0"},
+		{">CLIENT:CONNECT,0,0"},
 	}
 
 	for _, test := range tests {
-		fas := fakeAuthenticatorStub{}
-		middleware := NewMiddleware(fas.fakeAuthenticator)
+		var receivedEvent *server.ClientEvent
+		middleware := NewMiddleware(func(e server.ClientEvent) {
+			receivedEvent = &e
+		})
+
 		mockConnection := &management.MockConnection{}
 		middleware.Start(mockConnection)
 
 		consumed, err := middleware.ConsumeLine(test.line)
 		assert.NoError(t, err, test.line)
 		assert.True(t, consumed, test.line)
-		assert.False(t, fas.called)
+		assert.Nil(t, receivedEvent)
 	}
 }
 
-func Test_ConsumeLineAuthTrueChecker(t *testing.T) {
+func Test_ConsumeLineShouldTriggerClientStateAfterReceivingEnvironment(t *testing.T) {
 	var tests = []struct {
 		line string
 	}{
@@ -135,9 +99,12 @@ func Test_ConsumeLineAuthTrueChecker(t *testing.T) {
 		{">CLIENT:ENV,username=username1"},
 		{">CLIENT:ENV,END"},
 	}
-	fas := fakeAuthenticatorStub{}
-	fas.authenticated = true
-	middleware := NewMiddleware(fas.fakeAuthenticator)
+
+	var receivedEvent server.ClientEvent
+	middleware := NewMiddleware(func(e server.ClientEvent) {
+		receivedEvent = e
+	})
+
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
@@ -146,31 +113,49 @@ func Test_ConsumeLineAuthTrueChecker(t *testing.T) {
 		assert.NoError(t, err, test.line)
 		assert.True(t, consumed, test.line)
 	}
-	assert.True(t, fas.called)
-	assert.Equal(t, "username1", fas.username)
-	assert.Equal(t, "12341234", fas.password)
-	assert.Equal(t, "client-auth-nt 1 2", mockConnection.LastLine)
+	assert.Equal(
+		t,
+		server.ClientEvent{
+			EventType: server.Connect,
+			ClientID:  1,
+			ClientKey: 2,
+			Env: map[string]string{
+				"username": "username1",
+				"password": "12341234",
+			},
+		},
+		receivedEvent,
+	)
 }
 
-func Test_ConsumeLineAuthFalseChecker(t *testing.T) {
-	var tests = []struct {
-		line string
-	}{
-		{">CLIENT:CONNECT,3,4"},
-		{">CLIENT:ENV,username=bad"},
-		{">CLIENT:ENV,password=12341234"},
-		{">CLIENT:ENV,END"},
+func Test_ConsumeLinesAcceptsClientIdsAntKeysWithSeveralDigits(t *testing.T) {
+	var tests = []string{
+		">CLIENT:CONNECT,115,23",
+		">CLIENT:ENV,END",
 	}
-	fas := fakeAuthenticatorStub{}
-	fas.authenticated = false
-	middleware := NewMiddleware(fas.fakeAuthenticator)
+
+	var receivedEvent server.ClientEvent
+	middleware := NewMiddleware(func(e server.ClientEvent) {
+		receivedEvent = e
+	})
+
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
-	for _, test := range tests {
-		consumed, err := middleware.ConsumeLine(test.line)
-		assert.NoError(t, err, test.line)
-		assert.True(t, consumed, test.line)
+	for _, testLine := range tests {
+		consumed, err := middleware.ConsumeLine(testLine)
+		assert.NoError(t, err, testLine)
+		assert.Equal(t, true, consumed, testLine)
 	}
-	assert.Equal(t, "client-deny 3 4 wrong username or password", mockConnection.LastLine)
+
+	assert.Equal(
+		t,
+		server.ClientEvent{
+			EventType: server.Connect,
+			ClientID:  115,
+			ClientKey: 23,
+			Env:       map[string]string{},
+		},
+		receivedEvent,
+	)
 }

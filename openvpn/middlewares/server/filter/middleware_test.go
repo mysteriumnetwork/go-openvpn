@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,17 +64,11 @@ END
 )
 
 func Test_EmptyPacketFilterForEmptySubnets(t *testing.T) {
-	middleware := NewMiddleware(nil, nil)
 	mockConnection := &management.MockConnection{}
+	middleware := NewMiddleware(nil, nil)
 	middleware.Start(mockConnection)
 
-	consumed, err := middleware.ConsumeLine(">CLIENT:CONNECT,0,0")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-	consumed, err = middleware.ConsumeLine(">CLIENT:ENV,END")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-
+	middleware.handleClientEvent(server.ClientEvent{EventType: server.Connect, ClientID: 0})
 	assert.Equal(t, emptyFilter, mockConnection.WrittenLines[0])
 }
 
@@ -82,13 +77,7 @@ func Test_AllowPacketFilterForAllowSubnets(t *testing.T) {
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
-	consumed, err := middleware.ConsumeLine(">CLIENT:CONNECT,0,0")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-	consumed, err = middleware.ConsumeLine(">CLIENT:ENV,END")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-
+	middleware.handleClientEvent(server.ClientEvent{EventType: server.Connect, ClientID: 0})
 	assert.Equal(t, allowFilter, mockConnection.WrittenLines[0])
 }
 
@@ -97,13 +86,7 @@ func Test_BlockPacketFilterForBlockSubnets(t *testing.T) {
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
-	consumed, err := middleware.ConsumeLine(">CLIENT:CONNECT,0,0")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-	consumed, err = middleware.ConsumeLine(">CLIENT:ENV,END")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-
+	middleware.handleClientEvent(server.ClientEvent{EventType: server.Connect, ClientID: 0})
 	assert.Equal(t, blockFilter, mockConnection.WrittenLines[0])
 }
 
@@ -112,12 +95,6 @@ func Test_BothPacketFilterForBothSubnets(t *testing.T) {
 	mockConnection := &management.MockConnection{}
 	middleware.Start(mockConnection)
 
-	consumed, err := middleware.ConsumeLine(">CLIENT:CONNECT,0,0")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-	consumed, err = middleware.ConsumeLine(">CLIENT:ENV,END")
-	assert.NoError(t, err)
-	assert.True(t, consumed)
-
+	middleware.handleClientEvent(server.ClientEvent{EventType: server.Connect, ClientID: 0})
 	assert.Equal(t, bothFilter, mockConnection.WrittenLines[0])
 }

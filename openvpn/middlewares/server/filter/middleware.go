@@ -20,11 +20,11 @@ package filter
 import (
 	"bytes"
 	"html/template"
-	"strings"
 
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/log"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/management"
 	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server"
+	"github.com/mysteriumnetwork/go-openvpn/openvpn/middlewares/server/auth"
 )
 
 const filterLANTemplate = `client-pf {{.ClientID}}
@@ -42,59 +42,32 @@ END
 
 var filterLAN = template.Must(template.New("filter_lan").Parse(filterLANTemplate))
 
+// Exposes API to control client's packet filtering.
+//
+// The OpenVPN server should have been started with the
+// --management-client-pf directive so that it will require that
+// VPN tunnel packets sent or received by client instances must
+// conform to that client's packet filter configuration.
 type middleware struct {
+	*auth.Middleware
+
 	commandWriter management.CommandWriter
-	currentEvent  server.ClientEvent
 	allow         []string
 	block         []string
 }
 
-// NewMiddleware creates server user_auth challenge authentication middleware
+// NewMiddleware creates new instance of middleware
 func NewMiddleware(allow, block []string) *middleware {
-	return &middleware{
-		commandWriter: nil,
-		allow:         allow,
-		block:         block,
-	}
+	m := new(middleware)
+	m.Middleware = auth.NewMiddleware(m.handleClientEvent)
+	m.allow = allow
+	m.block = block
+	return m
 }
 
 func (m *middleware) Start(commandWriter management.CommandWriter) error {
 	m.commandWriter = commandWriter
-	return nil
-}
-
-func (m *middleware) Stop(commandWriter management.CommandWriter) error {
-	return nil
-}
-
-func (m *middleware) ConsumeLine(line string) (bool, error) {
-	if !strings.HasPrefix(line, ">CLIENT:") {
-		return false, nil
-	}
-
-	clientLine := strings.TrimPrefix(line, ">CLIENT:")
-
-	eventType, eventData, err := server.ParseClientEvent(clientLine)
-	if err != nil {
-		return true, err
-	}
-
-	switch eventType {
-	case server.Connect, server.Reauth:
-		clientID, _, err := server.ParseIDAndKey(eventData)
-		if err != nil {
-			return true, err
-		}
-
-		m.currentEvent.EventType = eventType
-		m.currentEvent.ClientID = clientID
-	case server.Env:
-		if strings.ToLower(eventData) == "end" {
-			m.handleClientEvent(m.currentEvent)
-		}
-	}
-
-	return true, nil
+	return m.Middleware.Start(commandWriter)
 }
 
 func (m *middleware) handleClientEvent(event server.ClientEvent) {
