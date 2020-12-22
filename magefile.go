@@ -3,7 +3,7 @@
 /*
  * go-openvpn -- Go gettable library for wrapping Openvpn functionality in go way.
  *
- * Copyright (C) 2020 The "MysteriumNetwork/go-openvpn" Authors..
+ * Copyright (C) 2020 BlockDev AG.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License Version 3
