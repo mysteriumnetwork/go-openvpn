@@ -25,6 +25,7 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/mysteriumnetwork/go-ci/commands"
+	cicommands "github.com/mysteriumnetwork/go-openvpn/ci"
 )
 
 const buildPath = "./build/morqa"
@@ -53,7 +54,7 @@ func GoReport() error {
 
 // Checks for issues with copyrights
 func CheckCopyright() error {
-	return commands.Copyright("./...", "docs")
+	return cicommands.Copyright("./...", "docs")
 }
 
 // Checks for issues with go imports
